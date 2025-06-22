@@ -1,0 +1,110 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Better Auth required models
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  bio           String?
+  location      String?
+  website       String?
+  interests     Json?    @default("[]")
+  preferences   Json?    @default("{}")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  accounts    Account[]
+  sessions    Session[]
+  documents   Document[]
+  quizResults QuizResult[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(references: [id], fields: [userId], onDelete: Cascade)
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(references: [id], fields: [userId], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([identifier, value])
+}
+
+// Application models
+model Document {
+  id                String       @id @default(cuid())
+  title             String
+  content           String       @db.Text
+  type              String
+  fileName          String
+  fileSize          Int
+  wordCount         Int
+  estimatedReadTime Int
+  progress          Float        @default(0)
+  chapters          Json?
+  metadata          Json?
+  userId            String
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quizResults       QuizResult[]
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+}
+
+model QuizResult {
+  id             String   @id @default(cuid())
+  documentId     String
+  userId         String
+  questions      Json
+  answers        Json
+  score          Float
+  totalQuestions Int
+  correctAnswers Int
+  timeSpent      Int
+  difficulty     String
+  document       Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+}
