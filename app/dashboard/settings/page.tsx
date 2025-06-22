@@ -99,6 +99,9 @@ export default function SettingsPage() {
     compactMode: false,
   });
 
+  // Define keys that should always be arrays for the Slider component
+  const sliderKeys = ["fontSize", "readingSpeed", "speechRate", "volume"];
+
   // Fetch user settings
   useEffect(() => {
     const fetchSettings = async () => {
@@ -106,7 +109,22 @@ export default function SettingsPage() {
         const response = await fetch("/api/user/settings");
         if (response.ok) {
           const data = await response.json();
-          setSettings(data.preferences);
+          const fetchedPreferences = data.preferences;
+
+          // --- FIX START ---
+          // Ensure slider values are always arrays
+          const transformedPreferences = { ...fetchedPreferences };
+          sliderKeys.forEach((key) => {
+            // Check if the key exists and its value is not already an array
+            if (
+              key in transformedPreferences &&
+              !Array.isArray(transformedPreferences[key])
+            ) {
+              transformedPreferences[key] = [transformedPreferences[key]];
+            }
+          });
+          setSettings(transformedPreferences);
+          // --- FIX END ---
         }
       } catch (error) {
         console.error("Failed to fetch settings:", error);
@@ -120,6 +138,8 @@ export default function SettingsPage() {
   }, []);
 
   const updateSetting = (key: string, value: any) => {
+    // When a slider's onValueChange triggers, it already provides an array,
+    // so no special handling is needed here for slider values.
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -132,6 +152,10 @@ export default function SettingsPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          // When saving, you might want to convert the single-element arrays
+          // back to numbers if your backend expects them that way.
+          // For now, sending the array is usually fine if the backend handles it,
+          // or if the backend doesn't explicitly require a number.
           preferences: settings,
         }),
       });

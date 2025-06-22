@@ -20,15 +20,17 @@ model User {
   bio           String?
   location      String?
   website       String?
-  interests     Json?    @default("[]")
-  preferences   Json?    @default("{}")
+  interests     String[] @default([])
+  preferences   Json?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  accounts    Account[]
-  sessions    Session[]
-  documents   Document[]
-  quizResults QuizResult[]
+  accounts        Account[]
+  sessions        Session[]
+  documents       Document[]
+  quizResults     QuizResult[]
+  readingSessions ReadingSession[]
+  achievements    Achievement[]
 }
 
 model Session {
@@ -75,22 +77,23 @@ model Verification {
 
 // Application models
 model Document {
-  id                String       @id @default(cuid())
+  id                String           @id @default(cuid())
   title             String
-  content           String       @db.Text
+  content           String           @db.Text
   type              String
   fileName          String
   fileSize          Int
   wordCount         Int
   estimatedReadTime Int
-  progress          Float        @default(0)
+  progress          Float            @default(0)
   chapters          Json?
   metadata          Json?
   userId            String
-  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   quizResults       QuizResult[]
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
+  readingSessions   ReadingSession[]
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
 }
 
 model QuizResult {
@@ -107,4 +110,31 @@ model QuizResult {
   document       Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt      DateTime @default(now())
+}
+
+model ReadingSession {
+  id            String    @id @default(cuid())
+  documentId    String
+  userId        String
+  chapterId     String?
+  startTime     DateTime
+  endTime       DateTime?
+  wordsRead     Int       @default(0)
+  progressStart Float     @default(0)
+  progressEnd   Float     @default(0)
+  isCompleted   Boolean   @default(false)
+  document      Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+}
+
+model Achievement {
+  id         String   @id @default(cuid())
+  userId     String
+  type       String // 'speed_reader', 'quiz_master', 'consistency', 'explorer', 'enthusiast', 'time_saver'
+  unlockedAt DateTime
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, type])
 }

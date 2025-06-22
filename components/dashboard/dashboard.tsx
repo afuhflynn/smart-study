@@ -1,50 +1,89 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "@/lib/auth-client";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { FileUpload } from "@/components/upload/file-upload";
 import { RecentDocuments } from "./recent-documents";
 import { ReadingStats } from "./reading-stats";
 import { Plus, BookOpen, Clock, TrendingUp, Zap } from "lucide-react";
+import { toast } from "sonner";
 import Link from "next/link";
 
 export function Dashboard() {
   const [showUpload, setShowUpload] = useState(false);
+  const [stats, setStats] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { data: session } = useSession();
 
-  const stats = [
-    {
-      title: "Documents Read",
-      value: "24",
-      change: "+12%",
-      icon: BookOpen,
-      gradient: "from-blue-500 to-indigo-500",
-    },
-    {
-      title: "Hours Saved",
-      value: "47",
-      change: "+8%",
-      icon: Clock,
-      gradient: "from-emerald-500 to-teal-500",
-    },
-    {
-      title: "Quiz Score",
-      value: "89%",
-      change: "+5%",
-      icon: TrendingUp,
-      gradient: "from-violet-500 to-purple-500",
-    },
-    {
-      title: "Reading Speed",
-      value: "245 WPM",
-      change: "+15%",
-      icon: Zap,
-      gradient: "from-amber-500 to-orange-500",
-    },
-  ];
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch("/api/user/stats");
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch statistics");
+        }
+
+        const data = await response.json();
+        if (data.success) {
+          setStats(data.stats);
+        } else {
+          throw new Error(data.error || "Failed to load statistics");
+        }
+      } catch (error) {
+        console.error("Failed to fetch stats:", error);
+        toast.error("Failed to load dashboard statistics");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (session?.user) {
+      fetchStats();
+    } else {
+      setIsLoading(false);
+    }
+  }, [session]);
+
+  const getStatCards = () => {
+    if (!stats) return [];
+
+    return [
+      {
+        title: "Documents Read",
+        value: stats.documentsRead.toString(),
+        change: `${stats.completionRate}% completion rate`,
+        icon: BookOpen,
+        gradient: "from-blue-500 to-indigo-500",
+      },
+      {
+        title: "Hours Saved",
+        value: stats.hoursSaved.toString(),
+        change: `${stats.readingConsistency}% consistency`,
+        icon: Clock,
+        gradient: "from-emerald-500 to-teal-500",
+      },
+      {
+        title: "Quiz Score",
+        value: `${stats.quizScore}%`,
+        change: `${stats.totalQuizzes} quizzes taken`,
+        icon: TrendingUp,
+        gradient: "from-violet-500 to-purple-500",
+      },
+      {
+        title: "Reading Speed",
+        value: `${stats.readingSpeed} WPM`,
+        change: `${stats.wordsPerSession} words/session`,
+        icon: Zap,
+        gradient: "from-amber-500 to-orange-500",
+      },
+    ];
+  };
 
   return (
     <div className="container mx-auto px-4 py-8 relative">
@@ -142,56 +181,75 @@ export function Dashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 relative z-10">
-        {stats.map((stat, index) => (
-          <motion.div
-            key={stat.title}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: index * 0.1 + 0.4 }}
-            whileHover={{ y: -8, scale: 1.02 }}
-            className="group"
-          >
-            <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-slate-200 dark:border-slate-700 hover-glow transition-all duration-300 relative overflow-hidden">
-              {/* Animated background gradient */}
-              <div
-                className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}
-              ></div>
-
-              <CardContent className="p-6 relative z-10">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
-                      {stat.title}
-                    </p>
-                    <motion.p
-                      className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mb-1"
-                      whileHover={{ scale: 1.05 }}
-                      transition={{ type: "spring", stiffness: 300 }}
-                    >
-                      {stat.value}
-                    </motion.p>
-                    <motion.p
-                      className="text-sm text-emerald-600 dark:text-emerald-400 flex items-center"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: index * 0.1 + 0.8 }}
-                    >
-                      <TrendingUp className="h-3 w-3 mr-1" />
-                      {stat.change} from last month
-                    </motion.p>
+        {isLoading
+          ? // Loading skeletons
+            [...Array(4)].map((_, index) => (
+              <Card
+                key={index}
+                className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm"
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <Skeleton className="h-4 w-20 mb-2" />
+                      <Skeleton className="h-8 w-16 mb-2" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                    <Skeleton className="h-12 w-12 rounded-xl" />
                   </div>
-                  <motion.div
-                    whileHover={{ scale: 1.2, rotate: 10 }}
-                    transition={{ type: "spring", stiffness: 300 }}
-                    className={`p-3 rounded-xl bg-gradient-to-br ${stat.gradient} shadow-lg`}
-                  >
-                    <stat.icon className="h-6 w-6 text-white" />
-                  </motion.div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
+                </CardContent>
+              </Card>
+            ))
+          : getStatCards().map((stat, index) => (
+              <motion.div
+                key={stat.title}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 + 0.4 }}
+                whileHover={{ y: -8, scale: 1.02 }}
+                className="group"
+              >
+                <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-slate-200 dark:border-slate-700 hover-glow transition-all duration-300 relative overflow-hidden">
+                  {/* Animated background gradient */}
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}
+                  ></div>
+
+                  <CardContent className="p-6 relative z-10">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
+                          {stat.title}
+                        </p>
+                        <motion.p
+                          className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mb-1"
+                          whileHover={{ scale: 1.05 }}
+                          transition={{ type: "spring", stiffness: 300 }}
+                        >
+                          {stat.value}
+                        </motion.p>
+                        <motion.p
+                          className="text-sm text-emerald-600 dark:text-emerald-400 flex items-center"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: index * 0.1 + 0.8 }}
+                        >
+                          <TrendingUp className="h-3 w-3 mr-1" />
+                          {stat.change} from last month
+                        </motion.p>
+                      </div>
+                      <motion.div
+                        whileHover={{ scale: 1.2, rotate: 10 }}
+                        transition={{ type: "spring", stiffness: 300 }}
+                        className={`p-3 rounded-xl bg-gradient-to-br ${stat.gradient} shadow-lg`}
+                      >
+                        <stat.icon className="h-6 w-6 text-white" />
+                      </motion.div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">
@@ -211,7 +269,7 @@ export function Dashboard() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, delay: 0.8 }}
         >
-          <ReadingStats />
+          <ReadingStats userStats={stats} isLoading={isLoading} />
         </motion.div>
       </div>
 

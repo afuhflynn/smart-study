@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
@@ -32,54 +33,14 @@ import { motion } from "framer-motion";
 import { useSession } from "@/lib/auth-client";
 import { toast } from "sonner";
 
-const achievements = [
-  {
-    title: "Speed Reader",
-    description: "Read at 200+ WPM",
-    icon: TrendingUp,
-    earned: true,
-    date: "2024-01-15",
-    color: "bg-green-500",
-  },
-  {
-    title: "Quiz Master",
-    description: "90%+ average quiz score",
-    icon: Award,
-    earned: true,
-    date: "2024-01-20",
-    color: "bg-blue-500",
-  },
-  {
-    title: "Consistent Reader",
-    description: "7-day reading streak",
-    icon: Target,
-    earned: false,
-    date: null,
-    color: "bg-gray-400",
-  },
-  {
-    title: "Document Explorer",
-    description: "Read 50+ documents",
-    icon: BookOpen,
-    earned: false,
-    date: null,
-    color: "bg-gray-400",
-  },
-];
-
-const readingStats = [
-  { label: "Documents Read", value: 24, target: 50, unit: "" },
-  { label: "Reading Speed", value: 245, target: 300, unit: "WPM" },
-  { label: "Quiz Average", value: 89, target: 95, unit: "%" },
-  { label: "Hours Saved", value: 47, target: 100, unit: "hrs" },
-];
-
 export default function ProfilePage() {
   const { data: session } = useSession();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [statsLoading, setStatsLoading] = useState(true);
   const [newInterest, setNewInterest] = useState("");
+  const [userStats, setUserStats] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: session?.user?.name || "",
     email: session?.user?.email || "",
@@ -113,10 +74,27 @@ export default function ProfilePage() {
       }
     };
 
+    const fetchStats = async () => {
+      try {
+        const response = await fetch("/api/user/stats");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setUserStats(data.stats);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch stats:", error);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
     if (session?.user) {
       fetchProfile();
+      fetchStats();
     } else {
       setIsLoading(false);
+      setStatsLoading(false);
     }
   }, [session]);
 
@@ -178,6 +156,59 @@ export default function ProfilePage() {
     }));
   };
 
+  const getReadingStats = () => {
+    if (!userStats) return [];
+
+    return [
+      {
+        label: "Documents Read",
+        value: userStats.documentsRead,
+        target: Math.max(userStats.documentsRead + 10, 50),
+        unit: "",
+      },
+      {
+        label: "Reading Speed",
+        value: userStats.readingSpeed,
+        target: Math.max(userStats.readingSpeed + 50, 300),
+        unit: "WPM",
+      },
+      {
+        label: "Quiz Average",
+        value: userStats.quizScore,
+        target: 95,
+        unit: "%",
+      },
+      {
+        label: "Hours Saved",
+        value: Math.round(userStats.hoursSaved),
+        target: Math.max(Math.round(userStats.hoursSaved) + 20, 100),
+        unit: "hrs",
+      },
+    ];
+  };
+
+  const getAchievementIcon = (type: string) => {
+    switch (type) {
+      case "speed_reader":
+        return TrendingUp;
+      case "quiz_master":
+        return Award;
+      case "consistency":
+        return Target;
+      case "explorer":
+        return BookOpen;
+      case "enthusiast":
+        return Award;
+      case "time_saver":
+        return TrendingUp;
+      default:
+        return Award;
+    }
+  };
+
+  const getAchievementColor = (earned: boolean) => {
+    return earned ? "bg-green-500" : "bg-gray-400";
+  };
   if (isLoading) {
     return (
       <AuthProvider>
@@ -400,26 +431,37 @@ export default function ProfilePage() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {readingStats.map((stat, index) => (
-                          <div key={index} className="space-y-2">
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                                {stat.label}
-                              </span>
-                              <span className="text-sm text-gray-500 dark:text-gray-400">
-                                {stat.value}
-                                {stat.unit} / {stat.target}
-                                {stat.unit}
-                              </span>
+                      {statsLoading ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {[...Array(4)].map((_, index) => (
+                            <div key={index} className="space-y-2">
+                              <Skeleton className="h-4 w-full" />
+                              <Skeleton className="h-2 w-full" />
                             </div>
-                            <Progress
-                              value={(stat.value / stat.target) * 100}
-                              className="h-2"
-                            />
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {getReadingStats().map((stat, index) => (
+                            <div key={index} className="space-y-2">
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                                  {stat.label}
+                                </span>
+                                <span className="text-sm text-gray-500 dark:text-gray-400">
+                                  {stat.value}
+                                  {stat.unit} / {stat.target}
+                                  {stat.unit}
+                                </span>
+                              </div>
+                              <Progress
+                                value={(stat.value / stat.target) * 100}
+                                className="h-2"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </div>
@@ -465,36 +507,84 @@ export default function ProfilePage() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      {achievements.map((achievement, index) => (
-                        <div
-                          key={index}
-                          className={`flex items-center space-x-3 p-3 rounded-lg ${
-                            achievement.earned
-                              ? "bg-green-50 dark:bg-green-900/20"
-                              : "bg-gray-50 dark:bg-gray-800"
-                          }`}
-                        >
+                      {statsLoading ? (
+                        [...Array(4)].map((_, index) => (
                           <div
-                            className={`p-2 rounded-full ${achievement.color}`}
+                            key={index}
+                            className="flex items-center space-x-3 p-3"
                           >
-                            <achievement.icon className="h-4 w-4 text-white" />
+                            <Skeleton className="h-10 w-10 rounded-full" />
+                            <div className="flex-1">
+                              <Skeleton className="h-4 w-24 mb-1" />
+                              <Skeleton className="h-3 w-32" />
+                            </div>
                           </div>
-                          <div className="flex-1">
-                            <h4
-                              className={`text-sm font-medium ${
-                                achievement.earned
-                                  ? "text-gray-900 dark:text-white"
-                                  : "text-gray-500 dark:text-gray-400"
-                              }`}
-                            >
-                              {achievement.title}
-                            </h4>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              {achievement.description}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
+                        ))
+                      ) : userStats?.achievements ? (
+                        userStats.achievements
+                          .sort((a: any, b: any) => {
+                            if (a.earned && !b.earned) return -1;
+                            if (!a.earned && b.earned) return 1;
+                            return b.progress - a.progress;
+                          })
+                          .slice(0, 6)
+                          .map((achievement: any, index: number) => {
+                            const IconComponent = getAchievementIcon(
+                              achievement.type
+                            );
+                            return (
+                              <div
+                                key={achievement.type}
+                                className={`flex items-center space-x-3 p-3 rounded-lg ${
+                                  achievement.earned
+                                    ? "bg-green-50 dark:bg-green-900/20"
+                                    : "bg-gray-50 dark:bg-gray-800"
+                                }`}
+                              >
+                                <div
+                                  className={`p-2 rounded-full ${getAchievementColor(
+                                    achievement.earned
+                                  )}`}
+                                >
+                                  <IconComponent className="h-4 w-4 text-white" />
+                                </div>
+                                <div className="flex-1">
+                                  <h4
+                                    className={`text-sm font-medium ${
+                                      achievement.earned
+                                        ? "text-gray-900 dark:text-white"
+                                        : "text-gray-500 dark:text-gray-400"
+                                    }`}
+                                  >
+                                    {achievement.title}
+                                  </h4>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    {achievement.description}
+                                  </p>
+                                  {!achievement.earned && (
+                                    <div className="mt-1">
+                                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
+                                        <div
+                                          className="bg-blue-600 h-1 rounded-full transition-all duration-300"
+                                          style={{
+                                            width: `${Math.min(
+                                              100,
+                                              achievement.progress
+                                            )}%`,
+                                          }}
+                                        />
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })
+                      ) : (
+                        <p className="text-gray-500 dark:text-gray-400 text-center py-4">
+                          Start reading to unlock achievements!
+                        </p>
+                      )}
                     </CardContent>
                   </Card>
                 </div>

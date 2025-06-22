@@ -132,3 +132,6 @@ dist/
 build/
 # Any files explicitly created for a local dev server
 server.log
+
+# local dev todos
+task.todo

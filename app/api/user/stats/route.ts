@@ -13,343 +13,367 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Fetch user with related data
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      include: {
-        documents: {
-          select: {
-            id: true,
-            progress: true,
-            wordCount: true,
-            estimatedReadTime: true,
-            createdAt: true,
-            updatedAt: true,
+    const userId = session.user.id;
+
+    // Get current date ranges
+    const now = new Date();
+    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+    startOfWeek.setHours(0, 0, 0, 0);
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    // Parallel database queries for efficiency
+    const [
+      totalDocuments,
+      completedDocuments,
+      weeklyDocuments,
+      todayDocuments,
+      totalQuizResults,
+      weeklyQuizResults,
+      totalReadingSessions,
+      recentReadingSessions,
+      userAchievements,
+      documentsWithProgress,
+    ] = await Promise.all([
+      // Total documents
+      prisma.document.count({
+        where: { userId },
+      }),
+
+      // Completed documents (100% progress)
+      prisma.document.count({
+        where: {
+          userId,
+          progress: { gte: 100 },
+        },
+      }),
+
+      // Weekly documents
+      prisma.document.count({
+        where: {
+          userId,
+          updatedAt: { gte: startOfWeek },
+        },
+      }),
+
+      // Today's documents
+      prisma.document.count({
+        where: {
+          userId,
+          updatedAt: { gte: startOfToday },
+        },
+      }),
+
+      // All quiz results
+      prisma.quizResult.findMany({
+        where: { userId },
+        select: {
+          score: true,
+          timeSpent: true,
+          totalQuestions: true,
+          correctAnswers: true,
+          createdAt: true,
+          document: {
+            select: { wordCount: true },
           },
         },
-        quizResults: {
-          select: {
-            score: true,
-            timeSpent: true,
-            createdAt: true,
-            totalQuestions: true,
-            correctAnswers: true,
-          },
+      }),
+
+      // Weekly quiz results
+      prisma.quizResult.findMany({
+        where: {
+          userId,
+          createdAt: { gte: startOfWeek },
         },
+      }),
+
+      // Total reading sessions
+      prisma.readingSession.findMany({
+        where: { userId },
+        select: {
+          wordsRead: true,
+          startTime: true,
+          endTime: true,
+          progressStart: true,
+          progressEnd: true,
+          createdAt: true,
+        },
+      }),
+
+      // Recent reading sessions (last 30 days)
+      prisma.readingSession.findMany({
+        where: {
+          userId,
+          createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+
+      // User achievements
+      prisma.achievement.findMany({
+        where: { userId },
+      }),
+
+      // Documents with their progress for streak calculation
+      prisma.document.findMany({
+        where: { userId },
+        select: {
+          id: true,
+          progress: true,
+          updatedAt: true,
+        },
+        orderBy: { updatedAt: "desc" },
+      }),
+    ]);
+
+    // Calculate reading statistics
+    const totalWordsRead = totalReadingSessions.reduce(
+      (sum, session) => sum + session.wordsRead,
+      0
+    );
+    const totalReadingTimeMinutes = totalReadingSessions.reduce(
+      (sum, session) => {
+        if (session.endTime) {
+          return (
+            sum +
+            (session.endTime.getTime() - session.startTime.getTime()) /
+              (1000 * 60)
+          );
+        }
+        return sum;
       },
+      0
+    );
+
+    // Calculate reading speed (WPM)
+    const readingSpeed =
+      totalReadingTimeMinutes > 0
+        ? Math.round(totalWordsRead / totalReadingTimeMinutes)
+        : 0;
+
+    // Calculate quiz average
+    const quizAverage =
+      totalQuizResults.length > 0
+        ? Math.round(
+            totalQuizResults.reduce((sum, quiz) => sum + quiz.score, 0) /
+              totalQuizResults.length
+          )
+        : 0;
+
+    // Calculate hours saved (compared to average 150 WPM reading speed)
+    const averageReadingSpeed = 150; // words per minute
+    const userEfficiencyFactor =
+      readingSpeed > 0 ? readingSpeed / averageReadingSpeed : 1;
+    const timeAtAverageSpeed = totalWordsRead / averageReadingSpeed; // minutes
+    const timeAtUserSpeed = totalReadingTimeMinutes;
+    const hoursSaved = Math.max(0, (timeAtAverageSpeed - timeAtUserSpeed) / 60);
+
+    // Calculate reading streak
+    let currentStreak = 0;
+    let maxStreak = 0;
+    let tempStreak = 0;
+
+    // Group documents by date and check for consecutive days
+    const dailyActivity = new Map();
+    documentsWithProgress.forEach((doc) => {
+      const date = doc.updatedAt.toDateString();
+      if (!dailyActivity.has(date)) {
+        dailyActivity.set(date, 0);
+      }
+      if (doc.progress > 0) {
+        dailyActivity.set(date, dailyActivity.get(date) + 1);
+      }
     });
 
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    // Calculate streak from today backwards
+    const today = new Date();
+    for (let i = 0; i < 365; i++) {
+      // Check last year
+      const checkDate = new Date(today);
+      checkDate.setDate(today.getDate() - i);
+      const dateStr = checkDate.toDateString();
+
+      if (dailyActivity.has(dateStr) && dailyActivity.get(dateStr) > 0) {
+        if (i === 0 || tempStreak > 0) {
+          // Continue streak only if no gaps
+          tempStreak++;
+          currentStreak = tempStreak;
+        }
+      } else {
+        if (i === 0) {
+          // No activity today, check yesterday
+          continue;
+        }
+        break; // Streak broken
+      }
     }
 
-    // Calculate statistics
-    const now = new Date();
-    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    // Weekly goal progress
+    const weeklyGoal = 5; // Default goal, could be from user preferences
+    const weeklyProgress = Math.min(100, (weeklyDocuments / weeklyGoal) * 100);
 
-    // Documents statistics
-    const totalDocuments = user.documents.length;
-    const completedDocuments = user.documents.filter(
-      (doc) => doc.progress >= 100
-    ).length;
-    const documentsThisWeek = user.documents.filter(
-      (doc) => doc.createdAt >= oneWeekAgo
-    ).length;
-    const documentsThisMonth = user.documents.filter(
-      (doc) => doc.createdAt >= oneMonthAgo
-    ).length;
-
-    // Reading time calculations
-    const totalEstimatedReadTime = user.documents.reduce(
-      (sum, doc) => sum + doc.estimatedReadTime,
-      0
-    );
-    const totalWordsRead = user.documents.reduce(
-      (sum, doc) => sum + doc.wordCount * (doc.progress / 100),
-      0
-    );
-
-    // Hours saved calculation (assuming 250 WPM average reading speed vs 150 WPM slow reading)
-    const averageReadingSpeed = 250; // WPM
-    const slowReadingSpeed = 150; // WPM
-    const timeAtNormalSpeed = totalWordsRead / averageReadingSpeed; // minutes
-    const timeAtSlowSpeed = totalWordsRead / slowReadingSpeed; // minutes
-    const hoursSaved = Math.max(0, (timeAtSlowSpeed - timeAtNormalSpeed) / 60);
-
-    // Quiz statistics
-    const totalQuizzes = user.quizResults.length;
-    const averageQuizScore =
-      totalQuizzes > 0
-        ? user.quizResults.reduce((sum, quiz) => sum + quiz.score, 0) /
-          totalQuizzes
-        : 0;
-    const quizzesThisWeek = user.quizResults.filter(
-      (quiz) => quiz.createdAt >= oneWeekAgo
-    ).length;
-    const recentQuizzes = user.quizResults.slice(-10); // Last 10 quizzes
-
-    // Reading speed calculation (based on quiz completion times and word counts)
-    const estimatedReadingSpeed =
-      totalQuizzes > 0 && totalWordsRead > 0
-        ? Math.round(
-            totalWordsRead /
-              (user.quizResults.reduce((sum, quiz) => sum + quiz.timeSpent, 0) /
-                60)
-          ) || 245
-        : 245; // Default to 245 WPM
-
-    // Weekly goal calculation (target: 5 documents per week)
-    const weeklyGoalTarget = 5;
-    const currentWeekProgress = documentsThisWeek;
-    const weeklyGoalPercentage = Math.min(
-      (currentWeekProgress / weeklyGoalTarget) * 100,
-      100
-    );
-
-    // Reading streak calculation (days with document activity)
-    const readingStreak = calculateReadingStreak(user.documents);
-
-    // Achievement calculations
-    const achievements = calculateAchievements({
-      totalDocuments: completedDocuments,
-      averageQuizScore,
-      readingStreak: readingStreak.currentStreak,
-      estimatedReadingSpeed,
-      totalQuizzes,
-      hoursSaved,
-    });
-
-    // Monthly comparisons for growth
-    const lastMonthDocuments = user.documents.filter((doc) => {
-      const docDate = new Date(doc.createdAt);
-      const twoMonthsAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
-      return docDate >= twoMonthsAgo && docDate < oneMonthAgo;
-    }).length;
-
-    const lastMonthQuizzes = user.quizResults.filter((quiz) => {
-      const quizDate = new Date(quiz.createdAt);
-      const twoMonthsAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
-      return quizDate >= twoMonthsAgo && quizDate < oneMonthAgo;
-    }).length;
-
-    // Calculate growth percentages
-    const documentsGrowth =
-      lastMonthDocuments > 0
-        ? ((documentsThisMonth - lastMonthDocuments) / lastMonthDocuments) * 100
-        : documentsThisMonth > 0
-        ? 100
-        : 0;
-
-    const quizzesGrowth =
-      lastMonthQuizzes > 0
-        ? ((quizzesThisWeek * 4 - lastMonthQuizzes) / lastMonthQuizzes) * 100
-        : quizzesThisWeek > 0
-        ? 100
-        : 0;
-
-    return NextResponse.json({
-      success: true,
-      stats: {
-        // Main dashboard stats
-        documentsRead: completedDocuments,
-        totalDocuments,
-        hoursSaved: Math.round(hoursSaved),
-        quizScore: Math.round(averageQuizScore),
-        readingSpeed: estimatedReadingSpeed,
-
-        // Weekly goal
-        weeklyGoal: {
-          current: currentWeekProgress,
-          target: weeklyGoalTarget,
-          percentage: Math.round(weeklyGoalPercentage),
-        },
-
-        // Reading streak
-        readingStreak: {
-          currentStreak: readingStreak.currentStreak,
-          longestStreak: readingStreak.longestStreak,
-          weeklyPattern: readingStreak.weeklyPattern,
-        },
-
-        // Achievements
-        achievements,
-
-        // Additional metrics
-        totalWordsRead: Math.round(totalWordsRead),
-        totalQuizzes,
-        documentsThisWeek,
-        quizzesThisWeek,
-
-        // Growth metrics
-        growth: {
-          documents:
-            documentsGrowth > 0
-              ? `+${Math.round(documentsGrowth)}%`
-              : `${Math.round(documentsGrowth)}%`,
-          quizzes:
-            quizzesGrowth > 0
-              ? `+${Math.round(quizzesGrowth)}%`
-              : `${Math.round(quizzesGrowth)}%`,
-          readingTime:
-            hoursSaved > 0 ? `+${Math.round((hoursSaved / 30) * 100)}%` : "0%",
-        },
-
-        // Recent activity
-        recentQuizzes: recentQuizzes.map((quiz) => ({
-          score: Math.round(quiz.score),
-          date: quiz.createdAt,
-          questionsAnswered: quiz.totalQuestions,
-          correctAnswers: quiz.correctAnswers,
-        })),
+    // Calculate achievement progress
+    const achievementTypes = {
+      speed_reader: {
+        title: "Speed Reader",
+        description: "Read at 200+ WPM",
+        target: 200,
+        current: readingSpeed,
+        earned: readingSpeed >= 200,
       },
+      quiz_master: {
+        title: "Quiz Master",
+        description: "90%+ average quiz score",
+        target: 90,
+        current: quizAverage,
+        earned: quizAverage >= 90,
+      },
+      consistency: {
+        title: "Consistency Champion",
+        description: "7+ day reading streak",
+        target: 7,
+        current: currentStreak,
+        earned: currentStreak >= 7,
+      },
+      explorer: {
+        title: "Document Explorer",
+        description: "Complete 10+ documents",
+        target: 10,
+        current: completedDocuments,
+        earned: completedDocuments >= 10,
+      },
+      enthusiast: {
+        title: "Quiz Enthusiast",
+        description: "Complete 25+ quizzes",
+        target: 25,
+        current: totalQuizResults.length,
+        earned: totalQuizResults.length >= 25,
+      },
+      time_saver: {
+        title: "Time Saver",
+        description: "Save 10+ hours through efficient reading",
+        target: 10,
+        current: Math.round(hoursSaved),
+        earned: hoursSaved >= 10,
+      },
+    };
+
+    // Update achievements in database
+    for (const [type, achievement] of Object.entries(achievementTypes)) {
+      if (achievement.earned) {
+        const existingAchievement = userAchievements.find(
+          (a) => a.type === type
+        );
+        if (!existingAchievement) {
+          await prisma.achievement.create({
+            data: {
+              userId,
+              type,
+              unlockedAt: new Date(),
+            },
+          });
+        }
+      }
+    }
+
+    // Get updated achievements
+    const updatedAchievements = await prisma.achievement.findMany({
+      where: { userId },
     });
+
+    // Reading activity for the last 7 days
+    const last7Days = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toDateString();
+      const activity = dailyActivity.get(dateStr) || 0;
+
+      last7Days.push({
+        day: date.toLocaleDateString("en-US", { weekday: "short" }),
+        date: dateStr,
+        completed: activity > 0,
+        count: activity,
+      });
+    }
+
+    const stats = {
+      // Main dashboard stats
+      documentsRead: completedDocuments,
+      hoursSaved: Math.round(hoursSaved * 10) / 10, // Round to 1 decimal
+      quizScore: quizAverage,
+      readingSpeed: readingSpeed,
+
+      // Weekly goal
+      weeklyGoal: {
+        current: weeklyDocuments,
+        target: weeklyGoal,
+        percentage: Math.round(weeklyProgress),
+      },
+
+      // Reading streak
+      streak: {
+        current: currentStreak,
+        best: Math.max(currentStreak, maxStreak),
+        last7Days: last7Days,
+      },
+
+      // Achievements
+      achievements: Object.entries(achievementTypes).map(
+        ([type, achievement]) => {
+          const earned = updatedAchievements.find((a) => a.type === type);
+          return {
+            type,
+            title: achievement.title,
+            description: achievement.description,
+            earned: !!earned,
+            progress: Math.min(
+              100,
+              (achievement.current / achievement.target) * 100
+            ),
+            current: achievement.current,
+            target: achievement.target,
+            unlockedAt: earned?.unlockedAt || null,
+          };
+        }
+      ),
+
+      // Additional stats
+      totalDocuments,
+      totalQuizzes: totalQuizResults.length,
+      weeklyQuizzes: weeklyQuizResults.length,
+      totalReadingTime: Math.round(totalReadingTimeMinutes),
+      averageSessionTime:
+        totalReadingSessions.length > 0
+          ? Math.round(totalReadingTimeMinutes / totalReadingSessions.length)
+          : 0,
+
+      // Activity insights
+      mostActiveDay: last7Days.reduce(
+        (max, day) => (day.count > max.count ? day : max),
+        last7Days[0]
+      ),
+      readingConsistency: Math.round(
+        (last7Days.filter((d) => d.completed).length / 7) * 100
+      ),
+
+      // Performance metrics
+      wordsPerSession:
+        totalReadingSessions.length > 0
+          ? Math.round(totalWordsRead / totalReadingSessions.length)
+          : 0,
+      completionRate:
+        totalDocuments > 0
+          ? Math.round((completedDocuments / totalDocuments) * 100)
+          : 0,
+    };
+
+    return NextResponse.json({ success: true, stats });
   } catch (error) {
     console.error("Failed to fetch user stats:", error);
     return NextResponse.json(
-      { error: "Failed to fetch statistics" },
+      { error: "Failed to fetch user statistics" },
       { status: 500 }
     );
   }
-}
-
-function calculateReadingStreak(documents: any[]) {
-  // Sort documents by date
-  const sortedDocs = documents
-    .map((doc) => ({
-      date: new Date(doc.updatedAt).toDateString(),
-      progress: doc.progress,
-    }))
-    .filter((doc) => doc.progress > 0) // Only count docs with some progress
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-  if (sortedDocs.length === 0) {
-    return {
-      currentStreak: 0,
-      longestStreak: 0,
-      weeklyPattern: Array(7).fill(false),
-    };
-  }
-
-  // Calculate current streak
-  let currentStreak = 0;
-  let longestStreak = 0;
-  let tempStreak = 1;
-
-  const today = new Date().toDateString();
-  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toDateString();
-
-  // Check if user read today or yesterday
-  if (sortedDocs[0]?.date === today || sortedDocs[0]?.date === yesterday) {
-    currentStreak = 1;
-
-    // Count consecutive days
-    for (let i = 1; i < sortedDocs.length; i++) {
-      const currentDate = new Date(sortedDocs[i - 1].date);
-      const nextDate = new Date(sortedDocs[i].date);
-      const dayDiff = Math.floor(
-        (currentDate.getTime() - nextDate.getTime()) / (24 * 60 * 60 * 1000)
-      );
-
-      if (dayDiff === 1) {
-        currentStreak++;
-        tempStreak++;
-      } else {
-        longestStreak = Math.max(longestStreak, tempStreak);
-        tempStreak = 1;
-      }
-    }
-  }
-
-  longestStreak = Math.max(longestStreak, tempStreak, currentStreak);
-
-  // Calculate weekly pattern (last 7 days)
-  const weeklyPattern = Array(7).fill(false);
-  const last7Days = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
-    return date.toDateString();
-  }).reverse();
-
-  last7Days.forEach((day, index) => {
-    weeklyPattern[index] = sortedDocs.some((doc) => doc.date === day);
-  });
-
-  return {
-    currentStreak,
-    longestStreak,
-    weeklyPattern,
-  };
-}
-
-function calculateAchievements(stats: {
-  totalDocuments: number;
-  averageQuizScore: number;
-  readingStreak: number;
-  estimatedReadingSpeed: number;
-  totalQuizzes: number;
-  hoursSaved: number;
-}) {
-  const achievements = [
-    {
-      title: "Speed Reader",
-      description: "Read at 200+ WPM",
-      icon: "TrendingUp",
-      earned: stats.estimatedReadingSpeed >= 200,
-      progress: Math.min((stats.estimatedReadingSpeed / 200) * 100, 100),
-      color: "text-blue-600",
-      date:
-        stats.estimatedReadingSpeed >= 200 ? new Date().toISOString() : null,
-    },
-    {
-      title: "Quiz Master",
-      description: "90%+ average quiz score",
-      icon: "Award",
-      earned: stats.averageQuizScore >= 90,
-      progress: Math.min((stats.averageQuizScore / 90) * 100, 100),
-      color: "text-purple-600",
-      date: stats.averageQuizScore >= 90 ? new Date().toISOString() : null,
-    },
-    {
-      title: "Consistency Champion",
-      description: "7-day reading streak",
-      icon: "Calendar",
-      earned: stats.readingStreak >= 7,
-      progress: Math.min((stats.readingStreak / 7) * 100, 100),
-      color: "text-green-600",
-      date: stats.readingStreak >= 7 ? new Date().toISOString() : null,
-    },
-    {
-      title: "Document Explorer",
-      description: "Complete 10+ documents",
-      icon: "BookOpen",
-      earned: stats.totalDocuments >= 10,
-      progress: Math.min((stats.totalDocuments / 10) * 100, 100),
-      color: "text-orange-600",
-      date: stats.totalDocuments >= 10 ? new Date().toISOString() : null,
-    },
-    {
-      title: "Quiz Enthusiast",
-      description: "Take 25+ quizzes",
-      icon: "Brain",
-      earned: stats.totalQuizzes >= 25,
-      progress: Math.min((stats.totalQuizzes / 25) * 100, 100),
-      color: "text-indigo-600",
-      date: stats.totalQuizzes >= 25 ? new Date().toISOString() : null,
-    },
-    {
-      title: "Time Saver",
-      description: "Save 10+ hours of reading time",
-      icon: "Clock",
-      earned: stats.hoursSaved >= 10,
-      progress: Math.min((stats.hoursSaved / 10) * 100, 100),
-      color: "text-emerald-600",
-      date: stats.hoursSaved >= 10 ? new Date().toISOString() : null,
-    },
-  ];
-
-  return achievements.sort((a, b) => {
-    if (a.earned && !b.earned) return -1;
-    if (!a.earned && b.earned) return 1;
-    return b.progress - a.progress;
-  });
 }
