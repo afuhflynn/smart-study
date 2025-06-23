@@ -12,6 +12,8 @@ import {
   MoreHorizontal,
   Trash2,
   Eye,
+  Edit,
+  Loader,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import {
@@ -23,6 +25,7 @@ import {
 import Link from "next/link";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
 
 interface Document {
   id: string;
@@ -57,18 +60,17 @@ const categoryColors: Record<string, string> = {
   General: "bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300",
 };
 
-export function RecentDocuments() {
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchDocuments();
-  }, []);
+export function RecentDocuments({
+  isUploadComplete,
+}: {
+  isUploadComplete: boolean;
+}) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState("");
+  const [documentToDeleteId, setDocumentToDeleteId] = useState("");
 
   const fetchDocuments = async () => {
     try {
-      setIsLoading(true);
       const response = await fetch(
         "/api/documents?limit=6&sortBy=updatedAt&sortOrder=desc"
       );
@@ -78,20 +80,36 @@ export function RecentDocuments() {
       }
 
       const data = await response.json();
-      setDocuments(data.documents || []);
-    } catch (error) {
+      return data.documents;
+    } catch (error: Error | any) {
       console.error("Failed to fetch documents:", error);
-      setError("Failed to load documents");
+      setError(error.message);
       toast.error("Failed to load documents");
-    } finally {
-      setIsLoading(false);
     }
   };
+  const {
+    data: documents,
+    isPending,
+    isError,
+    refetch,
+  } = useQuery<Document[]>({
+    queryKey: ["recent-document"],
+    queryFn: fetchDocuments,
+    staleTime: Infinity,
+    gcTime: 0,
+  });
+
+  useEffect(() => {
+    refetch();
+  }, [isUploadComplete]);
 
   const handleDeleteDocument = async (documentId: string, title: string) => {
     if (!confirm(`Are you sure you want to delete "${title}"?`)) {
       return;
     }
+
+    setDocumentToDeleteId(documentId);
+    setIsDeleting(true);
 
     try {
       const response = await fetch(`/api/documents/${documentId}`, {
@@ -102,11 +120,13 @@ export function RecentDocuments() {
         throw new Error("Failed to delete document");
       }
 
-      setDocuments((prev) => prev.filter((doc) => doc.id !== documentId));
+      refetch();
       toast.success("Document deleted successfully");
     } catch (error) {
       console.error("Failed to delete document:", error);
       toast.error("Failed to delete document");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -118,7 +138,7 @@ export function RecentDocuments() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
-  if (isLoading) {
+  if (isPending) {
     return (
       <Card>
         <CardHeader>
@@ -148,7 +168,7 @@ export function RecentDocuments() {
     );
   }
 
-  if (error) {
+  if (isError) {
     return (
       <Card>
         <CardHeader>
@@ -248,32 +268,40 @@ export function RecentDocuments() {
                     </div>
                   </div>
 
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link href={`/reader/${doc.id}`}>
-                          <Eye className="h-4 w-4 mr-2" />
-                          Open
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleDeleteDocument(doc.id, doc.title)}
-                        className="text-red-600 dark:text-red-400"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {isDeleting && documentToDeleteId === doc.id ? (
+                    <div className="text-red-500 text-xs flex items-center gap-2">
+                      Deleting <Loader className="animate-spin" />
+                    </div>
+                  ) : (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link href={`/reader/${doc.id}`}>
+                            <Eye className="h-4 w-4 mr-2" />
+                            Open
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() =>
+                            handleDeleteDocument(doc.id, doc.title)
+                          }
+                          className="text-red-600 dark:text-red-400"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
 
                 <div className="mt-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">

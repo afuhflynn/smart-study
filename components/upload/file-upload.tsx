@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, Dispatch, SetStateAction } from "react";
 import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -19,6 +19,7 @@ import { toast } from "sonner";
 
 interface FileUploadProps {
   onClose: () => void;
+  setIsUploadComplete: Dispatch<SetStateAction<boolean>>;
 }
 
 interface UploadedFile {
@@ -29,7 +30,7 @@ interface UploadedFile {
   documentId?: string;
 }
 
-export function FileUpload({ onClose }: FileUploadProps) {
+export function FileUpload({ onClose, setIsUploadComplete }: FileUploadProps) {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -120,6 +121,7 @@ export function FileUpload({ onClose }: FileUploadProps) {
             f.id === fileId ? { ...f, documentId: result.documentId } : f
           )
         );
+        setIsUploadComplete((prev) => !prev);
       } else {
         throw new Error(result.error || "Processing failed");
       }
@@ -228,62 +230,65 @@ export function FileUpload({ onClose }: FileUploadProps) {
         >
           <CardContent className="p-8">
             <motion.div
-              {...getRootProps()}
               className="cursor-pointer text-center"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              <input {...getInputProps()} />
+              <div {...getRootProps()}>
+                <input {...getInputProps()} />
 
-              <motion.div
-                className="mb-6"
-                animate={isDragActive ? { scale: [1, 1.1, 1] } : {}}
-                transition={{
-                  duration: 0.5,
-                  repeat: isDragActive ? Infinity : 0,
-                }}
-              >
-                <div
-                  className={`mx-auto w-16 h-16 rounded-2xl flex items-center justify-center mb-4 ${
-                    isDragActive
-                      ? "bg-gradient-to-br from-purple-500 to-blue-500 text-white"
-                      : "bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 text-gray-400"
-                  }`}
+                <motion.div
+                  className="mb-6"
+                  animate={isDragActive ? { scale: [1, 1.1, 1] } : {}}
+                  transition={{
+                    duration: 0.5,
+                    repeat: isDragActive ? Infinity : 0,
+                  }}
                 >
-                  <Upload className="h-8 w-8" />
-                </div>
-              </motion.div>
+                  <div
+                    className={`mx-auto w-16 h-16 rounded-2xl flex items-center justify-center mb-4 ${
+                      isDragActive
+                        ? "bg-gradient-to-br from-purple-500 to-blue-500 text-white"
+                        : "bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 text-gray-400"
+                    }`}
+                  >
+                    <Upload className="h-8 w-8" />
+                  </div>
+                </motion.div>
 
-              <motion.h3
-                className="mb-2 text-lg font-medium text-gray-900 dark:text-white"
-                animate={isDragActive ? { scale: [1, 1.05, 1] } : {}}
-                transition={{ duration: 0.3 }}
-              >
-                {isDragActive ? "Drop files here..." : "Upload your documents"}
-              </motion.h3>
-
-              <p className="mb-6 text-sm text-gray-600 dark:text-gray-300">
-                Drag and drop your PDF, text files, or images here, or click to
-                browse
-              </p>
-
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Button
-                  type="button"
-                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg"
+                <motion.h3
+                  className="mb-2 text-lg font-medium text-gray-900 dark:text-white"
+                  animate={isDragActive ? { scale: [1, 1.05, 1] } : {}}
+                  transition={{ duration: 0.3 }}
                 >
-                  <Upload className="mr-2 h-4 w-4" />
-                  Choose Files
-                </Button>
-              </motion.div>
+                  {isDragActive
+                    ? "Drop files here..."
+                    : "Upload your documents"}
+                </motion.h3>
 
-              <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-                Supports PDF, TXT, PNG, JPG, JPEG, GIF, BMP, WEBP (up to 50MB
-                each)
-              </p>
+                <p className="mb-6 text-sm text-gray-600 dark:text-gray-300">
+                  Drag and drop your PDF, text files, or images here, or click
+                  to browse
+                </p>
+
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Button
+                    type="button"
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg"
+                  >
+                    <Upload className="mr-2 h-4 w-4" />
+                    Choose Files
+                  </Button>
+                </motion.div>
+
+                <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+                  Supports PDF, TXT, PNG, JPG, JPEG, GIF, BMP, WEBP (up to 50MB
+                  each)
+                </p>
+              </div>
             </motion.div>
           </CardContent>
         </Card>
@@ -396,7 +401,13 @@ export function FileUpload({ onClose }: FileUploadProps) {
         transition={{ delay: 0.3 }}
       >
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <Button variant="outline" onClick={onClose}>
+          <Button
+            variant="outline"
+            onClick={onClose}
+            disabled={
+              uploadedFiles.filter((f) => f.status === "completed").length === 0
+            }
+          >
             Cancel
           </Button>
         </motion.div>

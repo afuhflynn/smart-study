@@ -137,7 +137,7 @@ export default function PrivacyPage() {
                 </li>
                 <li>
                   <strong>Protection:</strong> To protect rights, property, or
-                  safety of ChapterFlux, users, or others
+                  safety of SmartStudy, users, or others
                 </li>
               </ul>
 
@@ -247,10 +247,10 @@ export default function PrivacyPage() {
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 To exercise these rights, please contact us at{" "}
                 <a
-                  href="mailto:privacy@chapterflux.com"
+                  href="mailto:privacy@SmartStudy.com"
                   className="text-blue-600 hover:underline"
                 >
-                  privacy@chapterflux.com
+                  privacy@SmartStudy.com
                 </a>
               </p>
             </div>
@@ -313,7 +313,7 @@ export default function PrivacyPage() {
               </h2>
 
               <p className="mb-4">
-                ChapterFlux is not intended for children under 13. We do not
+                SmartStudy is not intended for children under 13. We do not
                 knowingly collect personal information from children under 13.
                 If we become aware that we have collected personal information
                 from a child under 13, we will take steps to delete such
@@ -342,33 +342,9 @@ export default function PrivacyPage() {
               <p className="mb-4">
                 We may update this privacy policy from time to time. We will
                 notify you of any material changes by email or through our
-                service. Your continued use of ChapterFlux after changes become
+                service. Your continued use of SmartStudy after changes become
                 effective constitutes acceptance of the new policy.
               </p>
-            </div>
-
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-8">
-              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-                Contact Us
-              </h2>
-
-              <p className="mb-4">
-                If you have any questions about this privacy policy or our
-                privacy practices, please contact us:
-              </p>
-
-              <div className="space-y-2 text-gray-600 dark:text-gray-300">
-                <p>
-                  <strong>Email:</strong> privacy@chapterflux.com
-                </p>
-                <p>
-                  <strong>Address:</strong> ChapterFlux Inc., 123 AI Street, San
-                  Francisco, CA 94105
-                </p>
-                <p>
-                  <strong>Phone:</strong> +1 (555) 123-4567
-                </p>
-              </div>
             </div>
           </div>
         </div>

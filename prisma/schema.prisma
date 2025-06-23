@@ -31,6 +31,7 @@ model User {
   quizResults     QuizResult[]
   readingSessions ReadingSession[]
   achievements    Achievement[]
+  DataExport      DataExport?
 }
 
 model Session {
@@ -137,4 +138,16 @@ model Achievement {
   createdAt  DateTime @default(now())
 
   @@unique([userId, type])
+}
+
+model DataExport {
+  id        String   @id @default(cuid())
+  token     String
+  data      String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@unique([userId])
 }

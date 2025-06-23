@@ -2,9 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { Reader } from "@/components/reader/reader";
-import { Header } from "@/components/layout/header";
-import { ThemeProvider } from "@/components/providers/theme-provider";
-import { AuthProvider } from "@/components/providers/auth-provider";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -48,63 +45,48 @@ export default function ReaderPage() {
 
   if (isLoading) {
     return (
-      <AuthProvider>
-        <ThemeProvider>
-          <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            <Header />
-            <main className="flex items-center justify-center h-screen">
-              <div className="text-center">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-                <p className="text-gray-600 dark:text-gray-300">
-                  Loading document...
-                </p>
-              </div>
-            </main>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <main className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <p className="text-gray-600 dark:text-gray-300">
+              Loading document...
+            </p>
           </div>
-        </ThemeProvider>
-      </AuthProvider>
+        </main>
+      </div>
     );
   }
 
   if (error || !document) {
     return (
-      <AuthProvider>
-        <ThemeProvider>
-          <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            <Header />
-            <main className="flex items-center justify-center h-screen">
-              <div className="text-center">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  {error || "Document not found"}
-                </h1>
-                <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  The document you're looking for doesn't exist or you don't
-                  have access to it.
-                </p>
-                <a
-                  href="/dashboard"
-                  className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                >
-                  ← Back to Dashboard
-                </a>
-              </div>
-            </main>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <main className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+              {error || "Document not found"}
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300 mb-4">
+              The document you're looking for doesn't exist or you don't have
+              access to it.
+            </p>
+            <a
+              href="/dashboard"
+              className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+            >
+              ← Back to Dashboard
+            </a>
           </div>
-        </ThemeProvider>
-      </AuthProvider>
+        </main>
+      </div>
     );
   }
 
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-          <Header />
-          <main>
-            <Reader documentId={documentId} document={document} />
-          </main>
-        </div>
-      </ThemeProvider>
-    </AuthProvider>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <main>
+        <Reader documentId={documentId} document={document} />
+      </main>
+    </div>
   );
 }

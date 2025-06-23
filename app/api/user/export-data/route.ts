@@ -4,29 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 import { generateUserDataPDF } from "@/lib/pdf-generator";
 import { sendDataExportNotification } from "@/lib/email";
-import { z } from "zod";
 
-// Store for temporary download tokens
-const downloadTokens = new Map<
-  string,
-  {
-    userId: string;
-    pdfBuffer: Buffer;
-    expiresAt: Date;
-  }
->();
-
-// Clean up expired tokens every hour
-setInterval(() => {
-  const now = new Date();
-  for (const [token, data] of downloadTokens.entries()) {
-    if (data.expiresAt < now) {
-      downloadTokens.delete(token);
-    }
-  }
-}, 60 * 60 * 1000); // 1 hour
-
-export async function POST(request: NextRequest) {
+export async function POST(_: NextRequest) {
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -53,16 +32,57 @@ export async function POST(request: NextRequest) {
     const token = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    downloadTokens.set(token, {
-      userId: user.id,
-      pdfBuffer,
-      expiresAt,
+    // Check if data has been exported and is not yet expired.
+    const documentExported = await prisma.dataExport.findUnique({
+      where: {
+        userId: user.id,
+      },
     });
 
+    if (documentExported) {
+      // Delete exported data and ask user to request for another one
+      const deletedData = await prisma.dataExport.delete({
+        where: {
+          id: documentExported.id,
+          userId: documentExported.userId,
+        },
+      });
+
+      if (!deletedData) {
+        return NextResponse.json(
+          { error: "An unexpected error occurred. Try again later." },
+          { status: 409 }
+        );
+      }
+
+      return NextResponse.json(
+        {
+          error:
+            "Data exported already. Request for another one in 4 hours time.",
+        },
+        { status: 403 }
+      );
+    }
+
+    // Save exported data
+    const document = await prisma.dataExport.create({
+      data: {
+        userId: user.id,
+        data: pdfBuffer.toString(),
+        token,
+        expiresAt, // Expires in 24 hours
+      },
+    });
+
+    if (!document) {
+      return NextResponse.json(
+        { error: "Sorry, an unexpected error occurred. Try again later." },
+        { status: 500 }
+      );
+    }
+
     // Create download URL
-    const downloadUrl = `${
-      process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
-    }/api/user/download-data?token=${token}`;
+    const downloadUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/user/download-data?token=${token}`;
 
     // Send email notification
     const emailSent = await sendDataExportNotification(
@@ -93,6 +113,23 @@ export async function POST(request: NextRequest) {
 // GET endpoint for downloading the PDF
 export async function GET(request: NextRequest) {
   try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Get user data
+    const foundUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+    });
+
+    if (!foundUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
     const { searchParams } = new URL(request.url);
     const token = searchParams.get("token");
 
@@ -104,7 +141,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if token exists and is valid
-    const tokenData = downloadTokens.get(token);
+    const tokenData = await prisma.dataExport.findUnique({
+      where: {
+        userId: foundUser.id,
+        token,
+      },
+    });
     if (!tokenData) {
       return NextResponse.json(
         { error: "Invalid or expired download token" },
@@ -113,30 +155,30 @@ export async function GET(request: NextRequest) {
     }
 
     if (tokenData.expiresAt < new Date()) {
-      downloadTokens.delete(token);
+      // Delete the exported data
+      await prisma.dataExport.delete({
+        where: {
+          id: tokenData.id,
+          userId: foundUser.id,
+        },
+      });
       return NextResponse.json(
         { error: "Download token has expired" },
         { status: 410 }
       );
     }
 
-    // Get user for filename
-    const user = await prisma.user.findUnique({
-      where: { id: tokenData.userId },
-      select: { name: true, email: true },
-    });
-
-    const filename = `ChapterFlux-Data-Export-${
-      user?.name?.replace(/\s+/g, "-") || "User"
+    const filename = `SmartStudy-Data-Export-${
+      foundUser?.name?.replace(/\s+/g, "-") || "User"
     }-${new Date().toISOString().split("T")[0]}.pdf`;
 
     // Return PDF
-    return new NextResponse(tokenData.pdfBuffer, {
+    return new NextResponse(tokenData.data, {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="${filename}"`,
-        "Content-Length": tokenData.pdfBuffer.length.toString(),
+        "Content-Length": tokenData.data.length.toString(),
       },
     });
   } catch (error) {

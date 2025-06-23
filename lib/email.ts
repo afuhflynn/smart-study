@@ -19,14 +19,14 @@ export const emailTemplates = {
     location: string;
     timestamp: string;
   }) => ({
-    subject: "🔐 New Login to Your ChapterFlux Account",
+    subject: "🔐 New Login to Your SmartStudy Account",
     html: `
       <!DOCTYPE html>
       <html>
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>ChapterFlux Login Notification</title>
+          <title>SmartStudy Login Notification</title>
           <style>
             body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
             .container { max-width: 600px; margin: 0 auto; background-color: white; }
@@ -55,7 +55,7 @@ export const emailTemplates = {
             <div class="header">
               <div class="logo">
                 <div class="logo-icon">📖</div>
-                ChapterFlux
+                SmartStudy
               </div>
             </div>
             
@@ -63,7 +63,7 @@ export const emailTemplates = {
               <h1 class="title">New Login Detected</h1>
               <p class="subtitle">
                 Hi ${data.userName},<br><br>
-                We detected a new login to your ChapterFlux account. Here are the details:
+                We detected a new login to your SmartStudy account. Here are the details:
               </p>
               
               <div class="info-card">
@@ -112,7 +112,7 @@ export const emailTemplates = {
             
             <div class="footer">
               <p class="footer-text">
-                This email was sent from ChapterFlux. You're receiving this because you have an account with us.
+                This email was sent from SmartStudy. You're receiving this because you have an account with us.
               </p>
               <div class="footer-links">
                 <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" class="footer-link">Dashboard</a>
@@ -125,11 +125,11 @@ export const emailTemplates = {
       </html>
     `,
     text: `
-      ChapterFlux - New Login Detected
+      SmartStudy - New Login Detected
       
       Hi ${data.userName},
       
-      We detected a new login to your ChapterFlux account:
+      We detected a new login to your SmartStudy account:
       
       Time: ${data.timestamp}
       Browser: ${data.browser}
@@ -149,14 +149,14 @@ export const emailTemplates = {
     downloadUrl: string;
     expiresAt: string;
   }) => ({
-    subject: "📥 Your ChapterFlux Data Export is Ready",
+    subject: "📥 Your SmartStudy Data Export is Ready",
     html: `
       <!DOCTYPE html>
       <html>
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>ChapterFlux Data Export</title>
+          <title>SmartStudy Data Export</title>
           <style>
             body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
             .container { max-width: 600px; margin: 0 auto; background-color: white; }
@@ -182,7 +182,7 @@ export const emailTemplates = {
             <div class="header">
               <div class="logo">
                 <div class="logo-icon">📖</div>
-                ChapterFlux
+                SmartStudy
               </div>
             </div>
             
@@ -190,7 +190,7 @@ export const emailTemplates = {
               <h1 class="title">Your Data Export is Ready! 🎉</h1>
               <p class="subtitle">
                 Hi ${data.userName},<br><br>
-                We've successfully compiled all your ChapterFlux data into a comprehensive PDF report. 
+                We've successfully compiled all your SmartStudy data into a comprehensive PDF report. 
                 Your export includes:
               </p>
               
@@ -228,7 +228,7 @@ export const emailTemplates = {
             
             <div class="footer">
               <p class="footer-text">
-                This email was sent from ChapterFlux in response to your data export request.
+                This email was sent from SmartStudy in response to your data export request.
               </p>
             </div>
           </div>
@@ -236,11 +236,11 @@ export const emailTemplates = {
       </html>
     `,
     text: `
-      ChapterFlux - Your Data Export is Ready!
+      SmartStudy - Your Data Export is Ready!
       
       Hi ${data.userName},
       
-      Your ChapterFlux data export is ready for download. The PDF includes:
+      Your SmartStudy data export is ready for download. The PDF includes:
       - Account information and profile
       - Reading history and progress
       - All uploaded documents
@@ -282,7 +282,7 @@ export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
     const transporter = createTransporter();
 
     const mailOptions = {
-      from: `"ChapterFlux" <${process.env.SMTP_USER}>`,
+      from: `"Flynn | SmartStudy" <${process.env.SMTP_USER}>`,
       to: options.to,
       subject: options.subject,
       html: options.html,

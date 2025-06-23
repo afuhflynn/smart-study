@@ -1,24 +1,20 @@
-'use client';
+"use client";
 
-import { Dashboard } from '@/components/dashboard/dashboard';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/footer';
-import { ThemeProvider } from '@/components/providers/theme-provider';
-import { AuthProvider } from '@/components/providers/auth-provider';
-import { useSession } from '@/lib/auth-client';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { Dashboard } from "@/components/dashboard/dashboard";
+import { Header } from "@/components/layout/header";
+import { useSession } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function DashboardPage() {
   const { data: session, isPending } = useSession();
   const router = useRouter();
 
-  // useEffect(() => {
-  //   if (!isPending && !session) {
-  //     router.push('/auth/signin');
-  //   }
-  // }, [session, isPending, router]);
-  
+  useEffect(() => {
+    if (!isPending && !session) {
+      router.push("/auth/signin");
+    }
+  }, [session, isPending, router]);
 
   if (isPending) {
     return (
@@ -28,22 +24,16 @@ export default function DashboardPage() {
     );
   }
 
-  // if (!session) {
-  //   return null;
-  // }
-  
+  if (!session) {
+    return null;
+  }
 
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-          <Header />
-          <main>
-            <Dashboard />
-          </main>
-          <Footer />
-        </div>
-      </ThemeProvider>
-    </AuthProvider>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Header />
+      <main>
+        <Dashboard />
+      </main>
+    </div>
   );
 }

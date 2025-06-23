@@ -12,43 +12,50 @@ import { ReadingStats } from "./reading-stats";
 import { Plus, BookOpen, Clock, TrendingUp, Zap } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+
+type UserStats = {
+  documentsRead: number;
+  completionRate: number;
+  hoursSaved: number;
+  readingConsistency: number;
+  quizScore: number;
+  totalQuizzes: number;
+  readingSpeed: number;
+  wordsPerSession: number;
+};
 
 export function Dashboard() {
   const [showUpload, setShowUpload] = useState(false);
-  const [stats, setStats] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
   const { data: session } = useSession();
+  const [isUploadComplete, setIsUploadComplete] = useState(false);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch("/api/user/stats");
+  const fetchStats = async () => {
+    try {
+      const response = await fetch("/api/user/stats");
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch statistics");
-        }
-
-        const data = await response.json();
-        if (data.success) {
-          setStats(data.stats);
-        } else {
-          throw new Error(data.error || "Failed to load statistics");
-        }
-      } catch (error) {
-        console.error("Failed to fetch stats:", error);
-        toast.error("Failed to load dashboard statistics");
-      } finally {
-        setIsLoading(false);
+      if (!response.ok) {
+        throw new Error("Failed to fetch statistics");
       }
-    };
 
-    if (session?.user) {
-      fetchStats();
-    } else {
-      setIsLoading(false);
+      const data = await response.json();
+      if (data.success) {
+        return data.stats;
+      } else {
+        throw new Error(data.error || "Failed to load statistics");
+      }
+    } catch (error) {
+      console.error("Failed to fetch stats:", error);
+      toast.error("Failed to load dashboard statistics");
     }
-  }, [session]);
+  };
+
+  const { data: stats, isPending } = useQuery({
+    queryKey: ["stats"],
+    staleTime: 5000,
+    gcTime: 1000,
+    queryFn: fetchStats,
+  });
 
   const getStatCards = () => {
     if (!stats) return [];
@@ -181,7 +188,7 @@ export function Dashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 relative z-10">
-        {isLoading
+        {isPending
           ? // Loading skeletons
             [...Array(4)].map((_, index) => (
               <Card
@@ -200,15 +207,8 @@ export function Dashboard() {
                 </CardContent>
               </Card>
             ))
-          : getStatCards().map((stat, index) => (
-              <motion.div
-                key={stat.title}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 + 0.4 }}
-                whileHover={{ y: -8, scale: 1.02 }}
-                className="group"
-              >
+          : getStatCards().map((stat) => (
+              <div key={stat.title} className="group">
                 <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-slate-200 dark:border-slate-700 hover-glow transition-all duration-300 relative overflow-hidden">
                   {/* Animated background gradient */}
                   <div
@@ -221,34 +221,23 @@ export function Dashboard() {
                         <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
                           {stat.title}
                         </p>
-                        <motion.p
-                          className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mb-1"
-                          whileHover={{ scale: 1.05 }}
-                          transition={{ type: "spring", stiffness: 300 }}
-                        >
+                        <p className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mb-1">
                           {stat.value}
-                        </motion.p>
-                        <motion.p
-                          className="text-sm text-emerald-600 dark:text-emerald-400 flex items-center"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: index * 0.1 + 0.8 }}
-                        >
+                        </p>
+                        <p className="text-sm text-emerald-600 dark:text-emerald-400 flex items-center">
                           <TrendingUp className="h-3 w-3 mr-1" />
                           {stat.change} from last month
-                        </motion.p>
+                        </p>
                       </div>
-                      <motion.div
-                        whileHover={{ scale: 1.2, rotate: 10 }}
-                        transition={{ type: "spring", stiffness: 300 }}
+                      <div
                         className={`p-3 rounded-xl bg-gradient-to-br ${stat.gradient} shadow-lg`}
                       >
                         <stat.icon className="h-6 w-6 text-white" />
-                      </motion.div>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
-              </motion.div>
+              </div>
             ))}
       </div>
 
@@ -260,7 +249,7 @@ export function Dashboard() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, delay: 0.6 }}
         >
-          <RecentDocuments />
+          <RecentDocuments isUploadComplete={isUploadComplete} />
         </motion.div>
 
         {/* Reading Stats */}
@@ -269,7 +258,7 @@ export function Dashboard() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, delay: 0.8 }}
         >
-          <ReadingStats userStats={stats} isLoading={isLoading} />
+          <ReadingStats userStats={stats} isLoading={isPending} />
         </motion.div>
       </div>
 
@@ -298,7 +287,10 @@ export function Dashboard() {
             >
               Upload Document
             </motion.h2>
-            <FileUpload onClose={() => setShowUpload(false)} />
+            <FileUpload
+              onClose={() => setShowUpload(false)}
+              setIsUploadComplete={setIsUploadComplete}
+            />
           </motion.div>
         </motion.div>
       )}

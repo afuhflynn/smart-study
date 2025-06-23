@@ -1,4 +1,4 @@
-# ChapterFlux - AI-Powered Reading & Learning Platform
+# SmartStudy - AI-Powered Reading & Learning Platform
 
 Transform your reading experience with AI-powered summaries, interactive quizzes, and natural voice narration. Built with Next.js, Google Gemini, and ElevenLabs.
 
@@ -29,8 +29,8 @@ Transform your reading experience with AI-powered summaries, interactive quizzes
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/chapterflux.git
-   cd chapterflux
+   git clone https://github.com/your-username/SmartStudy.git
+   cd SmartStudy
    ```
 
 2. **Install dependencies**
@@ -68,7 +68,7 @@ Transform your reading experience with AI-powered summaries, interactive quizzes
 
 3. **Pinecone Vector Database**
    - Create account at [Pinecone](https://pinecone.io)
-   - Create an index named `chapterflux-embeddings`
+   - Create an index named `SmartStudy-embeddings`
    - Add API key and environment to env vars
 
 4. **MongoDB Atlas**
@@ -83,7 +83,7 @@ Transform your reading experience with AI-powered summaries, interactive quizzes
 ## 📁 Project Structure
 
 ```
-chapterflux/
+SmartStudy/
 ├── app/                    # Next.js app directory
 │   ├── api/               # API routes
 │   ├── dashboard/         # Dashboard page
@@ -199,9 +199,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- 📧 Email: support@chapterflux.com
-- 💬 Discord: [Join our community](https://discord.gg/chapterflux)
-- 📖 Documentation: [docs.chapterflux.com](https://docs.chapterflux.com)
+- 📧 Email: support@SmartStudy.com
+- 💬 Discord: [Join our community](https://discord.gg/SmartStudy)
+- 📖 Documentation: [docs.SmartStudy.com](https://docs.SmartStudy.com)
 
 ---
 

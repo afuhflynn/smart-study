@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 interface User {
   id: string;
@@ -12,7 +12,7 @@ interface Document {
   id: string;
   title: string;
   content: string;
-  type: 'pdf' | 'text' | 'image';
+  type: "pdf" | "text" | "image";
   uploadedAt: Date;
   progress: number;
   lastRead?: Date;
@@ -61,13 +61,13 @@ interface AppState {
 
   // Preferences
   preferences: {
-    theme: 'light' | 'dark' | 'system';
+    theme: "light" | "dark" | "system";
     fontSize: number;
     readingSpeed: number;
     autoplay: boolean;
     notifications: boolean;
   };
-  updatePreferences: (updates: Partial<AppState['preferences']>) => void;
+  updatePreferences: (updates: Partial<AppState["preferences"]>) => void;
 
   // UI state
   sidebarOpen: boolean;
@@ -85,41 +85,49 @@ export const useAppStore = create<AppState>()(
 
       // Documents
       documents: [],
-      addDocument: (document) => set((state) => ({
-        documents: [...state.documents, document]
-      })),
-      updateDocument: (id, updates) => set((state) => ({
-        documents: state.documents.map(doc => 
-          doc.id === id ? { ...doc, ...updates } : doc
-        )
-      })),
-      removeDocument: (id) => set((state) => ({
-        documents: state.documents.filter(doc => doc.id !== id)
-      })),
-      getDocument: (id) => get().documents.find(doc => doc.id === id),
+      addDocument: (document) =>
+        set((state) => ({
+          documents: [...state.documents, document],
+        })),
+      updateDocument: (id, updates) =>
+        set((state) => ({
+          documents: state.documents.map((doc) =>
+            doc.id === id ? { ...doc, ...updates } : doc
+          ),
+        })),
+      removeDocument: (id) =>
+        set((state) => ({
+          documents: state.documents.filter((doc) => doc.id !== id),
+        })),
+      getDocument: (id) => get().documents.find((doc) => doc.id === id),
 
       // Reading progress
       readingSessions: [],
-      addReadingSession: (session) => set((state) => ({
-        readingSessions: [...state.readingSessions, session]
-      })),
-      updateReadingProgress: (documentId, progress) => set((state) => ({
-        documents: state.documents.map(doc =>
-          doc.id === documentId ? { ...doc, progress, lastRead: new Date() } : doc
-        )
-      })),
+      addReadingSession: (session) =>
+        set((state) => ({
+          readingSessions: [...state.readingSessions, session],
+        })),
+      updateReadingProgress: (documentId, progress) =>
+        set((state) => ({
+          documents: state.documents.map((doc) =>
+            doc.id === documentId
+              ? { ...doc, progress, lastRead: new Date() }
+              : doc
+          ),
+        })),
 
       // Preferences
       preferences: {
-        theme: 'system',
+        theme: "system",
         fontSize: 16,
         readingSpeed: 250,
         autoplay: false,
         notifications: true,
       },
-      updatePreferences: (updates) => set((state) => ({
-        preferences: { ...state.preferences, ...updates }
-      })),
+      updatePreferences: (updates) =>
+        set((state) => ({
+          preferences: { ...state.preferences, ...updates },
+        })),
 
       // UI state
       sidebarOpen: false,
@@ -128,7 +136,7 @@ export const useAppStore = create<AppState>()(
       setCurrentDocument: (id) => set({ currentDocument: id }),
     }),
     {
-      name: 'chapterflux-store',
+      name: "SmartStudy-store",
       partialize: (state) => ({
         user: state.user,
         documents: state.documents,

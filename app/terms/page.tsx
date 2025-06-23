@@ -26,7 +26,7 @@ export default function TermsPage() {
               Terms of Service
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-300">
-              Please read these terms carefully before using ChapterFlux.
+              Please read these terms carefully before using SmartStudy.
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
               Last updated: January 2024
@@ -44,7 +44,7 @@ export default function TermsPage() {
               </div>
 
               <p className="mb-4">
-                By accessing and using ChapterFlux ("Service"), you accept and
+                By accessing and using SmartStudy ("Service"), you accept and
                 agree to be bound by the terms and provision of this agreement.
               </p>
 
@@ -60,7 +60,7 @@ export default function TermsPage() {
                 </h4>
                 <p className="text-sm text-blue-700 dark:text-blue-400">
                   These terms constitute a legally binding agreement between you
-                  and ChapterFlux Inc. Please read them carefully.
+                  and SmartStudy Inc. Please read them carefully.
                 </p>
               </div>
             </div>
@@ -74,7 +74,7 @@ export default function TermsPage() {
               </div>
 
               <p className="mb-4">
-                Permission is granted to temporarily use ChapterFlux for
+                Permission is granted to temporarily use SmartStudy for
                 personal, non-commercial transitory viewing only. This is the
                 grant of a license, not a transfer of title, and under this
                 license you may not:
@@ -99,7 +99,7 @@ export default function TermsPage() {
 
               <p className="mb-4">
                 This license shall automatically terminate if you violate any of
-                these restrictions and may be terminated by ChapterFlux at any
+                these restrictions and may be terminated by SmartStudy at any
                 time.
               </p>
             </div>
@@ -211,9 +211,7 @@ export default function TermsPage() {
                 Free and Paid Plans
               </h3>
               <ul className="mb-6">
-                <li>
-                  ChapterFlux offers both free and paid subscription plans
-                </li>
+                <li>SmartStudy offers both free and paid subscription plans</li>
                 <li>
                   Free plans have usage limitations and feature restrictions
                 </li>
@@ -288,7 +286,7 @@ export default function TermsPage() {
                 Limitation of Liability
               </h3>
               <p className="mb-4">
-                In no event shall ChapterFlux or its suppliers be liable for any
+                In no event shall SmartStudy or its suppliers be liable for any
                 damages (including, without limitation, damages for loss of data
                 or profit, or due to business interruption) arising out of the
                 use or inability to use the service.
@@ -305,12 +303,12 @@ export default function TermsPage() {
               </h3>
               <ul className="mb-6">
                 <li>
-                  ChapterFlux and its content are protected by copyright and
+                  SmartStudy and its content are protected by copyright and
                   trademark laws
                 </li>
                 <li>
                   The service name, logo, and design are trademarks of
-                  ChapterFlux Inc.
+                  SmartStudy Inc.
                 </li>
                 <li>
                   You may not use our trademarks without written permission
@@ -438,24 +436,11 @@ export default function TermsPage() {
                 contact us:
               </p>
 
-              <div className="space-y-2 text-gray-600 dark:text-gray-300">
-                <p>
-                  <strong>Email:</strong> legal@chapterflux.com
-                </p>
-                <p>
-                  <strong>Address:</strong> ChapterFlux Inc., 123 AI Street, San
-                  Francisco, CA 94105
-                </p>
-                <p>
-                  <strong>Phone:</strong> +1 (555) 123-4567
-                </p>
-              </div>
-
               <div className="mt-6 p-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-700">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  <strong>Last Updated:</strong> January 15, 2024
+                  <strong>Last Updated:</strong> January 15, 2025
                   <br />
-                  <strong>Effective Date:</strong> January 15, 2024
+                  <strong>Effective Date:</strong> January 15, 2025
                   <br />
                   <strong>Version:</strong> 1.2
                 </p>

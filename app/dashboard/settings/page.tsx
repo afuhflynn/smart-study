@@ -13,12 +13,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
-import { ThemeProvider } from "@/components/providers/theme-provider";
-import { AuthProvider } from "@/components/providers/auth-provider";
 import {
   Settings,
   Bell,
@@ -29,14 +23,14 @@ import {
   Trash2,
   Download,
   Key,
-  Globe,
-  Type,
   Save,
   Loader2,
+  ArrowLeft,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
+import Link from "next/link";
 
 const voiceOptions = [
   { value: "rachel", label: "Rachel (Female, American)" },
@@ -66,6 +60,7 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isExportingData, setIsExportingData] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [settings, setSettings] = useState({
     // Notifications
     emailNotifications: true,
@@ -202,6 +197,28 @@ export default function SettingsPage() {
   };
 
   const handleDeleteAccount = () => {
+    setIsDeletingAccount(true);
+
+    fetch("/api/user/delete-account", {
+      method: "DELETE",
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          toast.success(
+            "Data export prepared! Check your email for the download link."
+          );
+        } else {
+          throw new Error(data.error || "Export failed");
+        }
+      })
+      .catch((error) => {
+        console.error("Export error:", error);
+        toast.error("Failed to export data: " + error.message);
+      })
+      .finally(() => {
+        setIsDeletingAccount(false);
+      });
     toast.error(
       "Account deletion requires additional verification. Please contact support."
     );
@@ -209,544 +226,543 @@ export default function SettingsPage() {
 
   if (isLoading) {
     return (
-      <AuthProvider>
-        <ThemeProvider>
-          <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            <Header />
-            <main className="container mx-auto px-4 py-8">
-              <div className="flex items-center justify-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin" />
-              </div>
-            </main>
-            <Footer />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <main className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin" />
           </div>
-        </ThemeProvider>
-      </AuthProvider>
+        </main>
+      </div>
     );
   }
 
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-          <Header />
-          <main className="container mx-auto px-4 py-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div>
+        <Button asChild variant={"outline"} className="mt-4 ml-4">
+          <Link href="/dashboard" className="flex items-center gap-4">
+            <ArrowLeft />
+            Back
+          </Link>
+        </Button>
+      </div>
+      <main className="container mx-auto px-4 py-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center">
+                <Settings className="h-8 w-8 mr-3" />
+                Settings
+              </h1>
+              <p className="text-gray-600 dark:text-gray-300 mt-1">
+                Customize your SmartStudy experience
+              </p>
+            </div>
+            <Button
+              onClick={handleSave}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+              disabled={isSaving}
             >
-              {/* Header */}
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center">
-                    <Settings className="h-8 w-8 mr-3" />
-                    Settings
-                  </h1>
-                  <p className="text-gray-600 dark:text-gray-300 mt-1">
-                    Customize your ChapterFlux experience
-                  </p>
-                </div>
-                <Button
-                  onClick={handleSave}
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                  disabled={isSaving}
-                >
-                  {isSaving ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Changes
-                    </>
-                  )}
-                </Button>
-              </div>
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Changes
+                </>
+              )}
+            </Button>
+          </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Left Column */}
-                <div className="space-y-6">
-                  {/* Notifications */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center">
-                        <Bell className="h-5 w-5 mr-2" />
-                        Notifications
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="email-notifications">
-                            Email Notifications
-                          </Label>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Receive updates via email
-                          </p>
-                        </div>
-                        <Switch
-                          id="email-notifications"
-                          checked={settings.emailNotifications}
-                          onCheckedChange={(checked) =>
-                            updateSetting("emailNotifications", checked)
-                          }
-                        />
-                      </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left Column */}
+            <div className="space-y-6">
+              {/* Notifications */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Bell className="h-5 w-5 mr-2" />
+                    Notifications
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="email-notifications">
+                        Email Notifications
+                      </Label>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Receive updates via email
+                      </p>
+                    </div>
+                    <Switch
+                      id="email-notifications"
+                      checked={settings.emailNotifications}
+                      onCheckedChange={(checked) =>
+                        updateSetting("emailNotifications", checked)
+                      }
+                    />
+                  </div>
 
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="push-notifications">
-                            Push Notifications
-                          </Label>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Receive browser notifications
-                          </p>
-                        </div>
-                        <Switch
-                          id="push-notifications"
-                          checked={settings.pushNotifications}
-                          onCheckedChange={(checked) =>
-                            updateSetting("pushNotifications", checked)
-                          }
-                        />
-                      </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="push-notifications">
+                        Push Notifications
+                      </Label>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Receive browser notifications
+                      </p>
+                    </div>
+                    <Switch
+                      id="push-notifications"
+                      checked={settings.pushNotifications}
+                      onCheckedChange={(checked) =>
+                        updateSetting("pushNotifications", checked)
+                      }
+                    />
+                  </div>
 
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="weekly-digest">
-                            Weekly Reading Digest
-                          </Label>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Summary of your reading activity
-                          </p>
-                        </div>
-                        <Switch
-                          id="weekly-digest"
-                          checked={settings.weeklyDigest}
-                          onCheckedChange={(checked) =>
-                            updateSetting("weeklyDigest", checked)
-                          }
-                        />
-                      </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="weekly-digest">
+                        Weekly Reading Digest
+                      </Label>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Summary of your reading activity
+                      </p>
+                    </div>
+                    <Switch
+                      id="weekly-digest"
+                      checked={settings.weeklyDigest}
+                      onCheckedChange={(checked) =>
+                        updateSetting("weeklyDigest", checked)
+                      }
+                    />
+                  </div>
 
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="reading-reminders">
-                            Reading Reminders
-                          </Label>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Gentle reminders to continue reading
-                          </p>
-                        </div>
-                        <Switch
-                          id="reading-reminders"
-                          checked={settings.readingReminders}
-                          onCheckedChange={(checked) =>
-                            updateSetting("readingReminders", checked)
-                          }
-                        />
-                      </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="reading-reminders">
+                        Reading Reminders
+                      </Label>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Gentle reminders to continue reading
+                      </p>
+                    </div>
+                    <Switch
+                      id="reading-reminders"
+                      checked={settings.readingReminders}
+                      onCheckedChange={(checked) =>
+                        updateSetting("readingReminders", checked)
+                      }
+                    />
+                  </div>
 
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="achievement-alerts">
-                            Achievement Alerts
-                          </Label>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Celebrate your reading milestones
-                          </p>
-                        </div>
-                        <Switch
-                          id="achievement-alerts"
-                          checked={settings.achievementAlerts}
-                          onCheckedChange={(checked) =>
-                            updateSetting("achievementAlerts", checked)
-                          }
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="achievement-alerts">
+                        Achievement Alerts
+                      </Label>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Celebrate your reading milestones
+                      </p>
+                    </div>
+                    <Switch
+                      id="achievement-alerts"
+                      checked={settings.achievementAlerts}
+                      onCheckedChange={(checked) =>
+                        updateSetting("achievementAlerts", checked)
+                      }
+                    />
+                  </div>
+                </CardContent>
+              </Card>
 
-                  {/* Reading Preferences */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center">
-                        <Eye className="h-5 w-5 mr-2" />
-                        Reading Preferences
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      <div>
-                        <Label>Font Size: {settings.fontSize[0]}px</Label>
-                        <Slider
-                          value={settings.fontSize}
-                          onValueChange={(value) =>
-                            updateSetting("fontSize", value)
-                          }
-                          min={12}
-                          max={24}
-                          step={1}
-                          className="mt-2"
-                        />
-                      </div>
+              {/* Reading Preferences */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Eye className="h-5 w-5 mr-2" />
+                    Reading Preferences
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    <Label>Font Size: {settings.fontSize[0]}px</Label>
+                    <Slider
+                      value={settings.fontSize}
+                      onValueChange={(value) =>
+                        updateSetting("fontSize", value)
+                      }
+                      min={12}
+                      max={24}
+                      step={1}
+                      className="mt-2"
+                    />
+                  </div>
 
-                      <div>
-                        <Label>Font Family</Label>
-                        <Select
-                          value={settings.fontFamily}
-                          onValueChange={(value) =>
-                            updateSetting("fontFamily", value)
-                          }
-                        >
-                          <SelectTrigger className="mt-2">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {fontOptions.map((font) => (
-                              <SelectItem key={font.value} value={font.value}>
-                                {font.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                  <div>
+                    <Label>Font Family</Label>
+                    <Select
+                      value={settings.fontFamily}
+                      onValueChange={(value) =>
+                        updateSetting("fontFamily", value)
+                      }
+                    >
+                      <SelectTrigger className="mt-2">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {fontOptions.map((font) => (
+                          <SelectItem key={font.value} value={font.value}>
+                            {font.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                      <div>
-                        <Label>
-                          Reading Speed: {settings.readingSpeed[0]} WPM
-                        </Label>
-                        <Slider
-                          value={settings.readingSpeed}
-                          onValueChange={(value) =>
-                            updateSetting("readingSpeed", value)
-                          }
-                          min={150}
-                          max={500}
-                          step={25}
-                          className="mt-2"
-                        />
-                      </div>
+                  <div>
+                    <Label>Reading Speed: {settings.readingSpeed[0]} WPM</Label>
+                    <Slider
+                      value={settings.readingSpeed}
+                      onValueChange={(value) =>
+                        updateSetting("readingSpeed", value)
+                      }
+                      min={150}
+                      max={500}
+                      step={25}
+                      className="mt-2"
+                    />
+                  </div>
 
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="highlight-words">
-                            Highlight Current Word
-                          </Label>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Highlight words during audio playback
-                          </p>
-                        </div>
-                        <Switch
-                          id="highlight-words"
-                          checked={settings.highlightWords}
-                          onCheckedChange={(checked) =>
-                            updateSetting("highlightWords", checked)
-                          }
-                        />
-                      </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="highlight-words">
+                        Highlight Current Word
+                      </Label>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Highlight words during audio playback
+                      </p>
+                    </div>
+                    <Switch
+                      id="highlight-words"
+                      checked={settings.highlightWords}
+                      onCheckedChange={(checked) =>
+                        updateSetting("highlightWords", checked)
+                      }
+                    />
+                  </div>
 
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="show-progress">
-                            Show Reading Progress
-                          </Label>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Display progress indicators
-                          </p>
-                        </div>
-                        <Switch
-                          id="show-progress"
-                          checked={settings.showProgress}
-                          onCheckedChange={(checked) =>
-                            updateSetting("showProgress", checked)
-                          }
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="show-progress">
+                        Show Reading Progress
+                      </Label>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Display progress indicators
+                      </p>
+                    </div>
+                    <Switch
+                      id="show-progress"
+                      checked={settings.showProgress}
+                      onCheckedChange={(checked) =>
+                        updateSetting("showProgress", checked)
+                      }
+                    />
+                  </div>
+                </CardContent>
+              </Card>
 
-                  {/* Audio Settings */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center">
-                        <Volume2 className="h-5 w-5 mr-2" />
-                        Audio Settings
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      <div>
-                        <Label>Default Voice</Label>
-                        <Select
-                          value={settings.defaultVoice}
-                          onValueChange={(value) =>
-                            updateSetting("defaultVoice", value)
-                          }
-                        >
-                          <SelectTrigger className="mt-2">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {voiceOptions.map((voice) => (
-                              <SelectItem key={voice.value} value={voice.value}>
-                                {voice.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+              {/* Audio Settings */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Volume2 className="h-5 w-5 mr-2" />
+                    Audio Settings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    <Label>Default Voice</Label>
+                    <Select
+                      value={settings.defaultVoice}
+                      onValueChange={(value) =>
+                        updateSetting("defaultVoice", value)
+                      }
+                    >
+                      <SelectTrigger className="mt-2">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {voiceOptions.map((voice) => (
+                          <SelectItem key={voice.value} value={voice.value}>
+                            {voice.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                      <div>
-                        <Label>Speech Rate: {settings.speechRate[0]}x</Label>
-                        <Slider
-                          value={settings.speechRate}
-                          onValueChange={(value) =>
-                            updateSetting("speechRate", value)
-                          }
-                          min={0.5}
-                          max={2.0}
-                          step={0.1}
-                          className="mt-2"
-                        />
-                      </div>
+                  <div>
+                    <Label>Speech Rate: {settings.speechRate[0]}x</Label>
+                    <Slider
+                      value={settings.speechRate}
+                      onValueChange={(value) =>
+                        updateSetting("speechRate", value)
+                      }
+                      min={0.5}
+                      max={2.0}
+                      step={0.1}
+                      className="mt-2"
+                    />
+                  </div>
 
-                      <div>
-                        <Label>Volume: {settings.volume[0]}%</Label>
-                        <Slider
-                          value={settings.volume}
-                          onValueChange={(value) =>
-                            updateSetting("volume", value)
-                          }
-                          min={0}
-                          max={100}
-                          step={5}
-                          className="mt-2"
-                        />
-                      </div>
+                  <div>
+                    <Label>Volume: {settings.volume[0]}%</Label>
+                    <Slider
+                      value={settings.volume}
+                      onValueChange={(value) => updateSetting("volume", value)}
+                      min={0}
+                      max={100}
+                      step={5}
+                      className="mt-2"
+                    />
+                  </div>
 
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="autoplay-chapters">
-                            Auto-play Chapters
-                          </Label>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Automatically continue to next chapter
-                          </p>
-                        </div>
-                        <Switch
-                          id="autoplay-chapters"
-                          checked={settings.autoplayChapters}
-                          onCheckedChange={(checked) =>
-                            updateSetting("autoplayChapters", checked)
-                          }
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="autoplay-chapters">
+                        Auto-play Chapters
+                      </Label>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Automatically continue to next chapter
+                      </p>
+                    </div>
+                    <Switch
+                      id="autoplay-chapters"
+                      checked={settings.autoplayChapters}
+                      onCheckedChange={(checked) =>
+                        updateSetting("autoplayChapters", checked)
+                      }
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
-                {/* Right Column */}
-                <div className="space-y-6">
-                  {/* Interface */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center">
-                        <Palette className="h-5 w-5 mr-2" />
-                        Interface
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      <div>
-                        <Label>Theme</Label>
-                        <Select value={theme} onValueChange={setTheme}>
-                          <SelectTrigger className="mt-2">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="light">Light</SelectItem>
-                            <SelectItem value="dark">Dark</SelectItem>
-                            <SelectItem value="system">System</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+            {/* Right Column */}
+            <div className="space-y-6">
+              {/* Interface */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Palette className="h-5 w-5 mr-2" />
+                    Interface
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    <Label>Theme</Label>
+                    <Select value={theme} onValueChange={setTheme}>
+                      <SelectTrigger className="mt-2">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="light">Light</SelectItem>
+                        <SelectItem value="dark">Dark</SelectItem>
+                        <SelectItem value="system">System</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                      <div>
-                        <Label>Language</Label>
-                        <Select
-                          value={settings.language}
-                          onValueChange={(value) =>
-                            updateSetting("language", value)
-                          }
-                        >
-                          <SelectTrigger className="mt-2">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {languageOptions.map((lang) => (
-                              <SelectItem key={lang.value} value={lang.value}>
-                                {lang.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                  <div>
+                    <Label>Language</Label>
+                    <Select
+                      value={settings.language}
+                      onValueChange={(value) =>
+                        updateSetting("language", value)
+                      }
+                    >
+                      <SelectTrigger className="mt-2">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {languageOptions.map((lang) => (
+                          <SelectItem key={lang.value} value={lang.value}>
+                            {lang.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="compact-mode">Compact Mode</Label>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Use a more compact interface
-                          </p>
-                        </div>
-                        <Switch
-                          id="compact-mode"
-                          checked={settings.compactMode}
-                          onCheckedChange={(checked) =>
-                            updateSetting("compactMode", checked)
-                          }
-                        />
-                      </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="compact-mode">Compact Mode</Label>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Use a more compact interface
+                      </p>
+                    </div>
+                    <Switch
+                      id="compact-mode"
+                      checked={settings.compactMode}
+                      onCheckedChange={(checked) =>
+                        updateSetting("compactMode", checked)
+                      }
+                    />
+                  </div>
 
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="sidebar-collapsed">
-                            Auto-collapse Sidebar
-                          </Label>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Automatically collapse sidebar on mobile
-                          </p>
-                        </div>
-                        <Switch
-                          id="sidebar-collapsed"
-                          checked={settings.sidebarCollapsed}
-                          onCheckedChange={(checked) =>
-                            updateSetting("sidebarCollapsed", checked)
-                          }
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="sidebar-collapsed">
+                        Auto-collapse Sidebar
+                      </Label>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Automatically collapse sidebar on mobile
+                      </p>
+                    </div>
+                    <Switch
+                      id="sidebar-collapsed"
+                      checked={settings.sidebarCollapsed}
+                      onCheckedChange={(checked) =>
+                        updateSetting("sidebarCollapsed", checked)
+                      }
+                    />
+                  </div>
+                </CardContent>
+              </Card>
 
-                  {/* Privacy & Security */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center">
-                        <Shield className="h-5 w-5 mr-2" />
-                        Privacy & Security
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      <div>
-                        <Label>Profile Visibility</Label>
-                        <Select
-                          value={settings.profileVisibility}
-                          onValueChange={(value) =>
-                            updateSetting("profileVisibility", value)
-                          }
-                        >
-                          <SelectTrigger className="mt-2">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="public">Public</SelectItem>
-                            <SelectItem value="friends">
-                              Friends Only
-                            </SelectItem>
-                            <SelectItem value="private">Private</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+              {/* Privacy & Security */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Shield className="h-5 w-5 mr-2" />
+                    Privacy & Security
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    <Label>Profile Visibility</Label>
+                    <Select
+                      value={settings.profileVisibility}
+                      onValueChange={(value) =>
+                        updateSetting("profileVisibility", value)
+                      }
+                    >
+                      <SelectTrigger className="mt-2">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="public">Public</SelectItem>
+                        <SelectItem value="friends">Friends Only</SelectItem>
+                        <SelectItem value="private">Private</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="data-sharing">
-                            Anonymous Data Sharing
-                          </Label>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Help improve ChapterFlux with anonymous usage data
-                          </p>
-                        </div>
-                        <Switch
-                          id="data-sharing"
-                          checked={settings.dataSharing}
-                          onCheckedChange={(checked) =>
-                            updateSetting("dataSharing", checked)
-                          }
-                        />
-                      </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="data-sharing">
+                        Anonymous Data Sharing
+                      </Label>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Help improve SmartStudy with anonymous usage data
+                      </p>
+                    </div>
+                    <Switch
+                      id="data-sharing"
+                      checked={settings.dataSharing}
+                      onCheckedChange={(checked) =>
+                        updateSetting("dataSharing", checked)
+                      }
+                    />
+                  </div>
 
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="analytics-optout">
-                            Opt-out of Analytics
-                          </Label>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Disable all analytics tracking
-                          </p>
-                        </div>
-                        <Switch
-                          id="analytics-optout"
-                          checked={settings.analyticsOptOut}
-                          onCheckedChange={(checked) =>
-                            updateSetting("analyticsOptOut", checked)
-                          }
-                        />
-                      </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="analytics-optout">
+                        Opt-out of Analytics
+                      </Label>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Disable all analytics tracking
+                      </p>
+                    </div>
+                    <Switch
+                      id="analytics-optout"
+                      checked={settings.analyticsOptOut}
+                      onCheckedChange={(checked) =>
+                        updateSetting("analyticsOptOut", checked)
+                      }
+                    />
+                  </div>
 
-                      <div className="pt-4 border-t">
-                        <Button
-                          variant="outline"
-                          onClick={handleExportData}
-                          className="w-full mb-3"
-                        >
+                  <div className="pt-4 border-t">
+                    <Button
+                      variant="outline"
+                      onClick={handleExportData}
+                      disabled={isExportingData}
+                      className="w-full mb-3"
+                    >
+                      {isExportingData ? (
+                        "Exporting..."
+                      ) : (
+                        <>
                           <Download className="h-4 w-4 mr-2" />
                           Export My Data
-                        </Button>
-                        <Button variant="outline" className="w-full mb-3">
-                          <Key className="h-4 w-4 mr-2" />
-                          Change Password
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
 
-                  {/* Danger Zone */}
-                  <Card className="border-red-200 dark:border-red-800">
-                    <CardHeader>
-                      <CardTitle className="flex items-center text-red-600 dark:text-red-400">
-                        <Trash2 className="h-5 w-5 mr-2" />
-                        Danger Zone
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                        <h4 className="font-medium text-red-800 dark:text-red-300 mb-2">
-                          Delete Account
-                        </h4>
-                        <p className="text-sm text-red-600 dark:text-red-400 mb-4">
-                          This action cannot be undone. All your data will be
-                          permanently deleted.
-                        </p>
-                        <Button
-                          variant="destructive"
-                          onClick={handleDeleteAccount}
-                          className="w-full"
-                        >
+              {/* Danger Zone */}
+              <Card className="border-red-200 dark:border-red-800">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-red-600 dark:text-red-400">
+                    <Trash2 className="h-5 w-5 mr-2" />
+                    Danger Zone
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                    <h4 className="font-medium text-red-800 dark:text-red-300 mb-2">
+                      Delete Account
+                    </h4>
+                    <p className="text-sm text-red-600 dark:text-red-400 mb-4">
+                      This action cannot be undone. All your data will be
+                      permanently deleted.
+                    </p>
+                    <Button
+                      variant="destructive"
+                      onClick={handleDeleteAccount}
+                      className="w-full"
+                    >
+                      {isDeletingAccount ? (
+                        "Deleting..."
+                      ) : (
+                        <>
                           <Trash2 className="h-4 w-4 mr-2" />
                           Delete My Account
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            </motion.div>
-          </main>
-          <Footer />
-        </div>
-      </ThemeProvider>
-    </AuthProvider>
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </motion.div>
+      </main>
+    </div>
   );
 }

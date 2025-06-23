@@ -1,44 +1,50 @@
-'use client';
+"use client";
 
-import { useSearchParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircle, BookOpen } from 'lucide-react';
-import { motion } from 'framer-motion';
-import Link from 'next/link';
+import { useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { AlertCircle, BookOpen } from "lucide-react";
+import { motion } from "framer-motion";
+import Link from "next/link";
 
 export default function AuthErrorPage() {
   const searchParams = useSearchParams();
-  const error = searchParams.get('error');
+  const error = searchParams.get("error");
 
   const getErrorMessage = (error: string | null) => {
     switch (error) {
-      case 'Configuration':
-        return 'There is a problem with the server configuration.';
-      case 'AccessDenied':
-        return 'Access denied. You do not have permission to sign in.';
-      case 'Verification':
-        return 'The verification token has expired or has already been used.';
-      case 'OAuthSignin':
-        return 'Error in constructing an authorization URL.';
-      case 'OAuthCallback':
-        return 'Error in handling the response from an OAuth provider.';
-      case 'OAuthCreateAccount':
-        return 'Could not create OAuth provider user in the database.';
-      case 'EmailCreateAccount':
-        return 'Could not create email provider user in the database.';
-      case 'Callback':
-        return 'Error in the OAuth callback handler route.';
-      case 'OAuthAccountNotLinked':
-        return 'The email on the account is already linked, but not with this OAuth account.';
-      case 'EmailSignin':
-        return 'Sending the e-mail with the verification token failed.';
-      case 'CredentialsSignin':
-        return 'The authorize callback returned null in the Credentials provider.';
-      case 'SessionRequired':
-        return 'The content of this page requires you to be signed in at all times.';
+      case "Configuration":
+        return "There is a problem with the server configuration.";
+      case "AccessDenied":
+        return "Access denied. You do not have permission to sign in.";
+      case "Verification":
+        return "The verification token has expired or has already been used.";
+      case "OAuthSignin":
+        return "Error in constructing an authorization URL.";
+      case "OAuthCallback":
+        return "Error in handling the response from an OAuth provider.";
+      case "OAuthCreateAccount":
+        return "Could not create OAuth provider user in the database.";
+      case "EmailCreateAccount":
+        return "Could not create email provider user in the database.";
+      case "Callback":
+        return "Error in the OAuth callback handler route.";
+      case "OAuthAccountNotLinked":
+        return "The email on the account is already linked, but not with this OAuth account.";
+      case "EmailSignin":
+        return "Sending the e-mail with the verification token failed.";
+      case "CredentialsSignin":
+        return "The authorize callback returned null in the Credentials provider.";
+      case "SessionRequired":
+        return "The content of this page requires you to be signed in at all times.";
       default:
-        return 'An unexpected error occurred during authentication.';
+        return "An unexpected error occurred during authentication.";
     }
   };
 
@@ -51,7 +57,7 @@ export default function AuthErrorPage() {
         className="w-full max-w-md"
       >
         {/* Logo */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
@@ -62,7 +68,7 @@ export default function AuthErrorPage() {
               <BookOpen className="h-6 w-6 text-white" />
             </div>
             <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              ChapterFlux
+              SmartStudy
             </span>
           </Link>
         </motion.div>
@@ -79,18 +85,14 @@ export default function AuthErrorPage() {
               {getErrorMessage(error)}
             </CardDescription>
           </CardHeader>
-          
+
           <CardContent className="space-y-4">
             <Button asChild className="w-full" size="lg">
-              <Link href="/auth/signin">
-                Try Again
-              </Link>
+              <Link href="/auth/signin">Try Again</Link>
             </Button>
-            
+
             <Button asChild variant="outline" className="w-full" size="lg">
-              <Link href="/">
-                Back to Home
-              </Link>
+              <Link href="/">Back to Home</Link>
             </Button>
           </CardContent>
         </Card>
