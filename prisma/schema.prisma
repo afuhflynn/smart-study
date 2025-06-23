@@ -21,9 +21,50 @@ model User {
   location      String?
   website       String?
   interests     String[] @default([])
-  preferences   Json?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+
+  // Current approach: Stores all settings as a JSON object
+  preferences Json?
+
+  // Proposed 'missing' fields if you wanted to explicitly define
+  // the structure of preferences directly on the User model
+  // instead of within a single JSON column.
+  // Note: If using these, you'd adjust your API to store/retrieve
+  // individual fields instead of the whole 'preferences' object.
+
+  // Notifications
+  emailNotifications Boolean? @default(true)
+  pushNotifications  Boolean? @default(false)
+  weeklyDigest       Boolean? @default(true)
+  readingReminders   Boolean? @default(true)
+  achievementAlerts  Boolean? @default(true)
+
+  // Reading Preferences
+  fontSize       Int?     @default(16) // Stored as number, frontend converts to [number]
+  fontFamily     String?  @default("inter")
+  readingSpeed   Int?     @default(250) // Stored as number, frontend converts to [number]
+  highlightWords Boolean? @default(true)
+  showProgress   Boolean? @default(true)
+  // autoPlay is missing from initial preferences object in code, but might be desired?
+  // autoPlay           Boolean? @default(false) // Added based on context if it's meant to be there.
+
+  // Audio Settings
+  defaultVoice     String?  @default("rachel")
+  speechRate       Float?   @default(1.0) // Stored as number, frontend converts to [number]
+  volume           Int?     @default(75) // Stored as number, frontend converts to [number]
+  autoplayChapters Boolean? @default(false)
+
+  // Privacy
+  profileVisibility String?  @default("private") // Could be an Enum: Public, Friends, Private
+  dataSharing       Boolean? @default(false)
+  analyticsOptOut   Boolean? @default(false)
+
+  // Interface
+  language         String?  @default("en") // Could be an Enum: en, es, fr, etc.
+  sidebarCollapsed Boolean? @default(false)
+  compactMode      Boolean? @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   accounts        Account[]
   sessions        Session[]

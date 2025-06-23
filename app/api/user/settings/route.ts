@@ -2,47 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
-import { z } from "zod";
 
-const updateSettingsSchema = z.object({
-  preferences: z
-    .object({
-      // Notifications
-      emailNotifications: z.boolean().optional(),
-      pushNotifications: z.boolean().optional(),
-      weeklyDigest: z.boolean().optional(),
-      readingReminders: z.boolean().optional(),
-      achievementAlerts: z.boolean().optional(),
-
-      // Reading Preferences
-      fontSize: z.number().min(12).max(24).optional(),
-      fontFamily: z.string().optional(),
-      readingSpeed: z.number().min(150).max(500).optional(),
-      autoPlay: z.boolean().optional(),
-      highlightWords: z.boolean().optional(),
-      showProgress: z.boolean().optional(),
-
-      // Audio Settings
-      defaultVoice: z.string().optional(),
-      speechRate: z.number().min(0.5).max(2.0).optional(),
-      volume: z.number().min(0).max(100).optional(),
-      autoplayChapters: z.boolean().optional(),
-
-      // Interface
-      theme: z.enum(["light", "dark", "system"]).optional(),
-      language: z.string().optional(),
-      sidebarCollapsed: z.boolean().optional(),
-      compactMode: z.boolean().optional(),
-
-      // Privacy
-      profileVisibility: z.enum(["public", "friends", "private"]).optional(),
-      dataSharing: z.boolean().optional(),
-      analyticsOptOut: z.boolean().optional(),
-    })
-    .optional(),
-});
-
-export async function GET(request: NextRequest) {
+export async function GET(_: NextRequest) {
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -126,7 +87,6 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const validatedData = updateSettingsSchema.parse(body);
 
     // Get current preferences
     const currentUser = await prisma.user.findUnique({
@@ -137,7 +97,7 @@ export async function PUT(request: NextRequest) {
     const currentPreferences = (currentUser?.preferences as any) || {};
     const newPreferences = {
       ...currentPreferences,
-      ...validatedData.preferences,
+      ...body,
     };
 
     const updatedUser = await prisma.user.update({
@@ -155,13 +115,6 @@ export async function PUT(request: NextRequest) {
       preferences: updatedUser.preferences,
     });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid input", details: error.errors },
-        { status: 400 }
-      );
-    }
-
     console.error("Failed to update user settings:", error);
     return NextResponse.json(
       { error: "Failed to update settings" },

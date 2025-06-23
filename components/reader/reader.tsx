@@ -12,7 +12,6 @@ import {
   Headphones,
   MessageSquare,
   Sparkles,
-  Settings,
   ArrowLeft,
   Menu,
 } from "lucide-react";
@@ -137,7 +136,7 @@ export function Reader({ documentId, document: propDocument }: ReaderProps) {
                   onClick={() => setViewMode(mode)}
                   className={
                     viewMode === mode
-                      ? "bg-white dark:bg-gray-800 shadow-sm"
+                      ? "bg-white dark:text-white text-black dark:bg-gray-800 shadow-sm"
                       : ""
                   }
                 >
@@ -164,14 +163,6 @@ export function Reader({ documentId, document: propDocument }: ReaderProps) {
             className="md:hidden hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <Menu className="h-4 w-4" />
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            className="hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            <Settings className="h-4 w-4" />
           </Button>
         </div>
       </motion.div>

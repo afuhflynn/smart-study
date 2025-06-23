@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -165,28 +164,30 @@ export function ReadingStats({ userStats, isLoading }: ReadingStatsProps) {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-7 gap-2 mb-4">
-            {readingStreak.map((day, index) => (
-              <motion.div
-                key={day.day}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-                className="text-center"
-              >
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                  {day.day}
-                </div>
-                <div
-                  className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-medium transition-colors ${
-                    day.completed
-                      ? "bg-green-100 border-green-500 text-green-700 dark:bg-green-900 dark:text-green-300"
-                      : "border-gray-200 text-gray-400 dark:border-gray-700"
-                  }`}
+            {readingStreak.map(
+              (day: { day: string; completed: boolean }, index: number) => (
+                <motion.div
+                  key={day.day}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                  className="text-center"
                 >
-                  {day.completed ? "✓" : index + 1}
-                </div>
-              </motion.div>
-            ))}
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    {day.day}
+                  </div>
+                  <div
+                    className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-medium transition-colors ${
+                      day.completed
+                        ? "bg-green-100 border-green-500 text-green-700 dark:bg-green-900 dark:text-green-300"
+                        : "border-gray-200 text-gray-400 dark:border-gray-700"
+                    }`}
+                  >
+                    {day.completed ? "✓" : index + 1}
+                  </div>
+                </motion.div>
+              )
+            )}
           </div>
 
           <p className="text-sm text-gray-600 dark:text-gray-300">
@@ -206,75 +207,93 @@ export function ReadingStats({ userStats, isLoading }: ReadingStatsProps) {
         <CardContent>
           <div className="space-y-3">
             {achievements
-              .sort((a, b) => {
-                if (a.earned && !b.earned) return -1;
-                if (!a.earned && b.earned) return 1;
-                return b.progress - a.progress;
-              })
-              .map((achievement, index) => {
-                const IconComponent = getAchievementIcon(achievement.type);
-                return (
-                  <motion.div
-                    key={achievement.type}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                    className={`flex items-start space-x-3 p-3 rounded-lg transition-colors ${
-                      achievement.earned
-                        ? "bg-green-50 dark:bg-green-900/20"
-                        : "bg-gray-50 dark:bg-gray-800"
-                    }`}
-                  >
-                    <IconComponent
-                      className={`h-5 w-5 mt-0.5 ${
+              .sort(
+                (
+                  a: { earned: boolean; progress: number },
+                  b: { earned: boolean; progress: number }
+                ) => {
+                  if (a.earned && !b.earned) return -1;
+                  if (!a.earned && b.earned) return 1;
+                  return b.progress - a.progress;
+                }
+              )
+              .map(
+                (
+                  achievement: {
+                    type: string;
+                    earned: boolean;
+                    title: string;
+                    description: string;
+                    target: number;
+                    current: number;
+                    progress: number;
+                  },
+                  index: number
+                ) => {
+                  const IconComponent = getAchievementIcon(achievement.type);
+                  return (
+                    <motion.div
+                      key={achievement.type}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      className={`flex items-start space-x-3 p-3 rounded-lg transition-colors ${
                         achievement.earned
-                          ? "text-green-600 dark:text-green-400"
-                          : "text-gray-400"
+                          ? "bg-green-50 dark:bg-green-900/20"
+                          : "bg-gray-50 dark:bg-gray-800"
                       }`}
-                    />
-                    <div className="flex-1">
-                      <h4
-                        className={`text-sm font-medium ${
+                    >
+                      <IconComponent
+                        className={`h-5 w-5 mt-0.5 ${
                           achievement.earned
-                            ? "text-gray-900 dark:text-white"
-                            : "text-gray-500 dark:text-gray-400"
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-gray-400"
                         }`}
-                      >
-                        {achievement.title}
-                      </h4>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {achievement.description}
-                      </p>
-                      {!achievement.earned && (
-                        <div className="mt-2">
-                          <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-                            <span>Progress</span>
-                            <span>
-                              {achievement.current}/{achievement.target}
-                            </span>
+                      />
+                      <div className="flex-1">
+                        <h4
+                          className={`text-sm font-medium ${
+                            achievement.earned
+                              ? "text-gray-900 dark:text-white"
+                              : "text-gray-500 dark:text-gray-400"
+                          }`}
+                        >
+                          {achievement.title}
+                        </h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {achievement.description}
+                        </p>
+                        {!achievement.earned && (
+                          <div className="mt-2">
+                            <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+                              <span>Progress</span>
+                              <span>
+                                {achievement.current}/{achievement.target}
+                              </span>
+                            </div>
+                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
+                              <div
+                                className="bg-blue-600 h-1 rounded-full transition-all duration-300"
+                                style={{
+                                  width: `${Math.min(
+                                    100,
+                                    achievement.progress
+                                  )}%`,
+                                }}
+                              />
+                            </div>
                           </div>
-                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
-                            <div
-                              className="bg-blue-600 h-1 rounded-full transition-all duration-300"
-                              style={{
-                                width: `${Math.min(
-                                  100,
-                                  achievement.progress
-                                )}%`,
-                              }}
-                            />
-                          </div>
+                        )}
+                      </div>
+                      {achievement.earned && (
+                        <div className="text-green-600 dark:text-green-400">
+                          <Award className="h-4 w-4" />
                         </div>
                       )}
-                    </div>
-                    {achievement.earned && (
-                      <div className="text-green-600 dark:text-green-400">
-                        <Award className="h-4 w-4" />
-                      </div>
-                    )}
-                  </motion.div>
-                );
-              })}
+                    </motion.div>
+                  );
+                }
+              )}
           </div>
         </CardContent>
       </Card>

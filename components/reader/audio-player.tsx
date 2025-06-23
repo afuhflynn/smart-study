@@ -74,7 +74,7 @@ export function AudioPlayer({
   const [isGenerating, setIsGenerating] = useState(false);
   const [audioData, setAudioData] = useState<AudioData | null>(null);
   const [availableVoices, setAvailableVoices] = useState<Voice[]>([]);
-  const [selectedVoice, setSelectedVoice] = useState("rachel");
+  const [selectedVoice, setSelectedVoice] = useState("aria");
   const [currentWordIndex, setCurrentWordIndex] = useState(-1);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
@@ -577,17 +577,9 @@ export function AudioPlayer({
                         <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
                           Voice
                         </label>
-                        <select
-                          value={selectedVoice}
-                          onChange={(e) => setSelectedVoice(e.target.value)}
-                          className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-white"
-                        >
-                          {availableVoices.map((voice) => (
-                            <option key={voice.id} value={voice.id}>
-                              {voice.name} - {voice.description}
-                            </option>
-                          ))}
-                        </select>
+                        <span className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-white">
+                          {availableVoices[0].name}
+                        </span>
                       </div>
 
                       {/* Playback Speed */}

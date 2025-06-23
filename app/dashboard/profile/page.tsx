@@ -20,7 +20,6 @@ import {
   TrendingUp,
   Save,
   Edit2,
-  Camera,
   Loader2,
   X,
   Plus,
@@ -220,7 +219,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 px-[2rem]">
       <div>
         <Button asChild variant={"outline"} className="mt-4 ml-4">
           <Link href="/dashboard" className="flex items-center gap-4">
@@ -294,14 +293,6 @@ export default function ProfilePage() {
                           {session?.user?.name?.charAt(0) || "U"}
                         </AvatarFallback>
                       </Avatar>
-                      {isEditing && (
-                        <Button
-                          size="sm"
-                          className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0"
-                        >
-                          <Camera className="h-4 w-4" />
-                        </Button>
-                      )}
                     </div>
                     <div className="flex-1">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

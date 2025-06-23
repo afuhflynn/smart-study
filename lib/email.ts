@@ -22,107 +22,157 @@ export const emailTemplates = {
     subject: "🔐 New Login to Your SmartStudy Account",
     html: `
       <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>SmartStudy Login Notification</title>
-          <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
-            .container { max-width: 600px; margin: 0 auto; background-color: white; }
-            .header { background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); padding: 40px 32px; text-align: center; }
-            .logo { display: inline-flex; align-items: center; gap: 12px; color: white; font-size: 24px; font-weight: bold; text-decoration: none; }
-            .logo-icon { width: 32px; height: 32px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
-            .content { padding: 40px 32px; }
-            .title { font-size: 24px; font-weight: bold; color: #1f2937; margin-bottom: 16px; }
-            .subtitle { color: #6b7280; margin-bottom: 32px; line-height: 1.6; }
-            .info-card { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px; margin: 24px 0; }
-            .info-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e5e7eb; }
-            .info-row:last-child { border-bottom: none; }
-            .info-label { font-weight: 600; color: #374151; }
-            .info-value { color: #6b7280; }
-            .alert-box { background: #fef3cd; border: 1px solid #f59e0b; border-radius: 8px; padding: 16px; margin: 24px 0; }
-            .alert-text { color: #92400e; font-size: 14px; }
-            .button { display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; margin: 16px 0; }
-            .footer { background: #f8fafc; padding: 32px; text-align: center; border-top: 1px solid #e5e7eb; }
-            .footer-text { color: #6b7280; font-size: 14px; }
-            .footer-links { margin-top: 16px; }
-            .footer-link { color: #3b82f6; text-decoration: none; margin: 0 16px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <div class="logo">
-                <div class="logo-icon">📖</div>
-                SmartStudy
-              </div>
-            </div>
-            
-            <div class="content">
-              <h1 class="title">New Login Detected</h1>
-              <p class="subtitle">
-                Hi ${data.userName},<br><br>
-                We detected a new login to your SmartStudy account. Here are the details:
-              </p>
-              
-              <div class="info-card">
-                <div class="info-row">
-                  <span class="info-label">🕒 Time</span>
-                  <span class="info-value">${data.timestamp}</span>
-                </div>
-                <div class="info-row">
-                  <span class="info-label">🌐 Browser</span>
-                  <span class="info-value">${data.browser}</span>
-                </div>
-                <div class="info-row">
-                  <span class="info-label">💻 Operating System</span>
-                  <span class="info-value">${data.os}</span>
-                </div>
-                <div class="info-row">
-                  <span class="info-label">📱 Device</span>
-                  <span class="info-value">${data.device}</span>
-                </div>
-                <div class="info-row">
-                  <span class="info-label">📍 IP Address</span>
-                  <span class="info-value">${data.ip}</span>
-                </div>
-                <div class="info-row">
-                  <span class="info-label">🗺️ Location</span>
-                  <span class="info-value">${data.location}</span>
-                </div>
-              </div>
-              
-              <div class="alert-box">
-                <p class="alert-text">
-                  <strong>⚠️ If this wasn't you:</strong> Please secure your account immediately by changing your password and reviewing your account settings.
-                </p>
-              </div>
-              
-              <p>
-                <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings" class="button">
-                  Review Account Settings
-                </a>
-              </p>
-              
-              <p style="color: #6b7280; font-size: 14px; margin-top: 32px;">
-                If you have any concerns about your account security, please contact our support team immediately.
-              </p>
-            </div>
-            
-            <div class="footer">
-              <p class="footer-text">
-                This email was sent from SmartStudy. You're receiving this because you have an account with us.
-              </p>
-              <div class="footer-links">
-                <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" class="footer-link">Dashboard</a>
-                <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings" class="footer-link">Settings</a>
-                <a href="${process.env.NEXT_PUBLIC_APP_URL}/help" class="footer-link">Support</a>
-              </div>
-            </div>
+<html lang="en" class="antialiased">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SmartStudy Login Notification</title>
+    <style type="text/tailwindcss">
+      @tailwind base;
+      @tailwind components;
+      @tailwind utilities;
+
+      @layer base {
+        :root {
+          --background: 0 0% 100%;
+          --foreground: 222.2 84% 4.9%;
+          --card: 0 0% 100%;
+          --card-foreground: 222.2 84% 4.9%;
+          /* … all your other variables … */
+          --radius: 0.5rem;
+        }
+
+        .dark {
+          --background: 222.2 84% 4.9%;
+          --foreground: 210 40% 98%;
+          /* … */
+        }
+
+        * {
+          @apply border-border font-sans;
+        }
+
+        body {
+          @apply bg-background text-foreground;
+        }
+      }
+
+      /* animations, hover, glass, scrollbar… paste your entire custom CSS here */
+      @keyframes float { /* … */ }
+      @keyframes gradient-shift { /* … */ }
+      @keyframes shimmer { /* … */ }
+      @keyframes bounce-in { /* … */ }
+      @keyframes slide-up { /* … */ }
+      @keyframes fade-in-scale { /* … */ }
+
+      .animate-float { animation: float 3s ease-in-out infinite; }
+      .animate-gradient {
+        background-size: 200% 200%;
+        animation: gradient-shift 3s ease infinite;
+      }
+      .animate-shimmer { /* … */ }
+      .animate-bounce-in { /* … */ }
+      .animate-slide-up { /* … */ }
+      .animate-fade-in-scale { /* … */ }
+
+      .hover-lift:hover { /* … */ }
+      .hover-glow:hover { /* … */ }
+
+      .text-gradient { /* … */ }
+      .glass { /* … */ }
+      .glass-dark { /* … */ }
+
+      ::-webkit-scrollbar { /* … */ }
+      ::-webkit-scrollbar-track { /* … */ }
+      ::-webkit-scrollbar-thumb { /* … */ }
+      ::-webkit-scrollbar-thumb:hover { /* … */ }
+    </style>
+  </head>
+
+  <body class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-lg mx-auto bg-card rounded-[var(--radius)] shadow-md overflow-hidden">
+      <!-- Header -->
+      <header class="bg-gradient-to-br from-primary to-secondary px-8 py-12 text-center animate-gradient">
+        <a href="#" class="inline-flex items-center gap-3 text-primary-foreground text-2xl font-bold animate-bounce-in">
+          <div class="w-8 h-8 bg-card-foreground rounded-md flex items-center justify-center">
+            📖
           </div>
-        </body>
-      </html>
+          SmartStudy
+        </a>
+      </header>
+
+      <!-- Content -->
+      <main class="p-8 space-y-6">
+        <h1 class="text-2xl font-semibold text-foreground animate-slide-up">New Login Detected</h1>
+        <p class="text-muted-foreground leading-relaxed animate-fade-in-scale">
+          Hi ${data.userName},<br />
+          We detected a new login to your SmartStudy account. Here are the details:
+        </p>
+
+        <!-- Info Card -->
+        <div class="bg-muted border input rounded-[var(--radius)] p-6 space-y-4">
+          <div class="flex justify-between items-center border-b border-border pb-2">
+            <span class="font-semibold text-foreground">🕒 Time</span>
+            <span class="text-muted-foreground">${data.timestamp}</span>
+          </div>
+          <div class="flex justify-between items-center border-b border-border pb-2">
+            <span class="font-semibold text-foreground">🌐 Browser</span>
+            <span class="text-muted-foreground">${data.browser}</span>
+          </div>
+          <div class="flex justify-between items-center border-b border-border pb-2">
+            <span class="font-semibold text-foreground">💻 OS</span>
+            <span class="text-muted-foreground">${data.os}</span>
+          </div>
+          <div class="flex justify-between items-center border-b border-border pb-2">
+            <span class="font-semibold text-foreground">📱 Device</span>
+            <span class="text-muted-foreground">${data.device}</span>
+          </div>
+          <div class="flex justify-between items-center border-b border-border pb-2">
+            <span class="font-semibold text-foreground">📍 IP Address</span>
+            <span class="text-muted-foreground">${data.ip}</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="font-semibold text-foreground">🗺️ Location</span>
+            <span class="text-muted-foreground">${data.location}</span>
+          </div>
+        </div>
+
+        <!-- Alert -->
+        <div class="bg-yellow-50 border-yellow-300 rounded-[var(--radius)] p-4 glass-dark animate-shimmer">
+          <p class="text-yellow-800 text-sm">
+            <strong>⚠️ If this wasn't you:</strong>
+            Please secure your account immediately by changing your password and reviewing your account settings.
+          </p>
+        </div>
+
+        <!-- CTA -->
+        <div class="text-center">
+          <a
+            href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings"
+            class="inline-block px-6 py-3 rounded-[var(--radius)] font-semibold bg-primary text-primary-foreground hover-lift hover-glow animate-bounce-in"
+          >
+            Review Account Settings
+          </a>
+        </div>
+
+        <p class="text-muted-foreground text-sm text-center mt-6">
+          If you have any concerns about your account security, please contact our support team immediately.
+        </p>
+      </main>
+
+      <!-- Footer -->
+      <footer class="bg-muted p-6 border-t border-border text-center">
+        <p class="text-muted-foreground text-sm">This email was sent from SmartStudy. You're receiving this because you have an account with us.</p>
+        <div class="mt-4 space-x-4">
+          <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" class="text-primary hover:underline">Dashboard</a>
+          <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings" class="text-primary hover:underline">Settings</a>
+          <a href="${process.env.NEXT_PUBLIC_APP_URL}/help" class="text-primary hover:underline">Support</a>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>
+
     `,
     text: `
       SmartStudy - New Login Detected
@@ -152,88 +202,131 @@ export const emailTemplates = {
     subject: "📥 Your SmartStudy Data Export is Ready",
     html: `
       <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>SmartStudy Data Export</title>
-          <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
-            .container { max-width: 600px; margin: 0 auto; background-color: white; }
-            .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 32px; text-align: center; }
-            .logo { display: inline-flex; align-items: center; gap: 12px; color: white; font-size: 24px; font-weight: bold; text-decoration: none; }
-            .logo-icon { width: 32px; height: 32px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
-            .content { padding: 40px 32px; }
-            .title { font-size: 24px; font-weight: bold; color: #1f2937; margin-bottom: 16px; }
-            .subtitle { color: #6b7280; margin-bottom: 32px; line-height: 1.6; }
-            .download-card { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 1px solid #0ea5e9; border-radius: 12px; padding: 32px; text-align: center; margin: 24px 0; }
-            .download-button { display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 16px 0; }
-            .info-box { background: #fef3cd; border: 1px solid #f59e0b; border-radius: 8px; padding: 16px; margin: 24px 0; }
-            .info-text { color: #92400e; font-size: 14px; }
-            .footer { background: #f8fafc; padding: 32px; text-align: center; border-top: 1px solid #e5e7eb; }
-            .footer-text { color: #6b7280; font-size: 14px; }
-            .features-list { list-style: none; padding: 0; margin: 24px 0; }
-            .features-list li { padding: 8px 0; color: #374151; }
-            .features-list li:before { content: "✅ "; margin-right: 8px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <div class="logo">
-                <div class="logo-icon">📖</div>
-                SmartStudy
-              </div>
-            </div>
-            
-            <div class="content">
-              <h1 class="title">Your Data Export is Ready! 🎉</h1>
-              <p class="subtitle">
-                Hi ${data.userName},<br><br>
-                We've successfully compiled all your SmartStudy data into a comprehensive PDF report. 
-                Your export includes:
-              </p>
-              
-              <ul class="features-list">
-                <li>Account information and profile details</li>
-                <li>Complete reading history and progress</li>
-                <li>All uploaded documents and content</li>
-                <li>Quiz results and performance analytics</li>
-                <li>Reading preferences and settings</li>
-                <li>Usage statistics and insights</li>
-              </ul>
-              
-              <div class="download-card">
-                <h3 style="margin-top: 0; color: #0c4a6e;">🚀 Download Your Data</h3>
-                <p style="color: #0369a1; margin-bottom: 24px;">
-                  Your personalized data export is ready for download. Click the button below to get your PDF report.
-                </p>
-                <a href="${data.downloadUrl}" class="download-button">
-                  📥 Download My Data (PDF)
-                </a>
-              </div>
-              
-              <div class="info-box">
-                <p class="info-text">
-                  <strong>⏰ Important:</strong> This download link will expire on ${data.expiresAt}. 
-                  Please download your data before this date.
-                </p>
-              </div>
-              
-              <p style="color: #6b7280; font-size: 14px; margin-top: 32px;">
-                The PDF contains all your data in an organized, easy-to-read format. If you have any questions 
-                about your data export, please don't hesitate to contact our support team.
-              </p>
-            </div>
-            
-            <div class="footer">
-              <p class="footer-text">
-                This email was sent from SmartStudy in response to your data export request.
-              </p>
-            </div>
+<html lang="en" class="antialiased">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SmartStudy Data Export</title>
+    <style type="text/tailwindcss">
+      @tailwind base;
+      @tailwind components;
+      @tailwind utilities;
+
+      @layer base {
+        :root {
+          --background: 0 0% 100%;
+          --foreground: 222.2 84% 4.9%;
+          --card: 0 0% 100%;
+          --card-foreground: 222.2 84% 4.9%;
+          --primary: 158.2 76.8% 46.9%;      /* #10b981 */
+          --primary-foreground: 0 0% 100%;
+          --secondary: 159.3 77.5% 35.9%;    /* #059669 */
+          --secondary-foreground: 0 0% 100%;
+          --muted: 210 40% 96%;
+          --muted-foreground: 215.4 16.3% 46.9%;
+          --border: 214.3 31.8% 91.4%;
+          --radius: 0.5rem;
+        }
+        .dark {
+          --background: 222.2 84% 4.9%;
+          --foreground: 210 40% 98%;
+        }
+        * { @apply border-border font-sans; }
+        body { @apply bg-background text-foreground; }
+      }
+
+      /* copy-paste your custom animations, hover & glass CSS here */
+    </style>
+  </head>
+
+  <body class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-lg mx-auto bg-card rounded-[var(--radius)] shadow-md overflow-hidden">
+      <!-- Header -->
+      <header class="bg-gradient-to-br from-primary to-secondary px-8 py-12 text-center animate-gradient">
+        <a href="#" class="inline-flex items-center gap-3 text-primary-foreground text-2xl font-bold animate-bounce-in">
+          <div class="w-8 h-8 bg-card-foreground rounded-md flex items-center justify-center">
+            📖
           </div>
-        </body>
-      </html>
+          SmartStudy
+        </a>
+      </header>
+
+      <!-- Content -->
+      <main class="p-8 space-y-6">
+        <h1 class="text-2xl font-semibold text-foreground animate-slide-up">
+          Your Data Export is Ready! 🎉
+        </h1>
+
+        <p class="text-muted-foreground leading-relaxed animate-fade-in-scale">
+          Hi ${data.userName},<br />
+          We've successfully compiled all your SmartStudy data into a comprehensive PDF report. Your export includes:
+        </p>
+
+        <!-- Features List -->
+        <ul class="space-y-2 list-none ml-4 marker:text-primary animate-float">
+          <li class="flex items-start">
+            <span class="mr-2">✅</span>
+            <span>Account information and profile details</span>
+          </li>
+          <li class="flex items-start">
+            <span class="mr-2">✅</span>
+            <span>Complete reading history and progress</span>
+          </li>
+          <li class="flex items-start">
+            <span class="mr-2">✅</span>
+            <span>All uploaded documents and content</span>
+          </li>
+          <li class="flex items-start">
+            <span class="mr-2">✅</span>
+            <span>Quiz results and performance analytics</span>
+          </li>
+          <li class="flex items-start">
+            <span class="mr-2">✅</span>
+            <span>Reading preferences and settings</span>
+          </li>
+          <li class="flex items-start">
+            <span class="mr-2">✅</span>
+            <span>Usage statistics and insights</span>
+          </li>
+        </ul>
+
+        <!-- Download Card -->
+        <div class="bg-gradient-to-br from-muted to-card border-secondary border rounded-[var(--radius)] p-6 text-center animate-shimmer">
+          <h3 class="text-lg font-semibold text-foreground mb-2 animate-bounce-in">🚀 Download Your Data</h3>
+          <p class="text-primary mb-6 animate-slide-up">
+            Your personalized data export is ready for download. Click below to get your PDF.
+          </p>
+          <a
+            href="${data.downloadUrl}"
+            class="inline-block px-6 py-3 rounded-[var(--radius)] font-semibold bg-primary text-primary-foreground hover-lift hover-glow animate-fade-in-scale"
+          >
+            📥 Download My Data (PDF)
+          </a>
+        </div>
+
+        <!-- Info Box -->
+        <div class="bg-yellow-50 border-yellow-300 rounded-[var(--radius)] p-4 glass-dark animate-shimmer">
+          <p class="text-yellow-800 text-sm">
+            <strong>⏰ Important:</strong>
+            This link expires on ${data.expiresAt}. Please download before then.
+          </p>
+        </div>
+
+        <p class="text-muted-foreground text-sm text-center mt-6 animate-fade-in-scale">
+          The PDF contains all your data in an organized, easy-to-read format. Questions? Hit up our support team.
+        </p>
+      </main>
+
+      <!-- Footer -->
+      <footer class="bg-muted p-6 border-t border-border text-center">
+        <p class="text-muted-foreground text-sm">
+          Sent by SmartStudy in response to your data export request.
+        </p>
+      </footer>
+    </div>
+  </body>
+</html>
+
     `,
     text: `
       SmartStudy - Your Data Export is Ready!
