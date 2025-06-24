@@ -134,4 +134,8 @@ build/
 server.log
 
 # local dev todos
-task.todo
+task.
+
+# editor files
+.vscode
+
