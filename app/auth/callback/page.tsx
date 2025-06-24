@@ -1,22 +1,22 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { BookOpen } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Suspense, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { BookOpen } from "lucide-react";
+import { motion } from "framer-motion";
 
-export default function AuthCallbackPage() {
+const AuthCallbackComponent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const error = searchParams.get('error');
-    
+    const error = searchParams.get("error");
+
     if (error) {
       router.push(`/auth/error?error=${error}`);
     } else {
       // Successful authentication, redirect to dashboard
-      router.push('/dashboard');
+      router.push("/dashboard");
     }
   }, [router, searchParams]);
 
@@ -28,15 +28,15 @@ export default function AuthCallbackPage() {
         transition={{ duration: 0.6 }}
         className="text-center"
       >
-        <motion.div 
+        <motion.div
           className="rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 p-4 shadow-lg mx-auto mb-6 w-16 h-16 flex items-center justify-center"
           animate={{ rotate: 360 }}
           transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
         >
           <BookOpen className="h-8 w-8 text-white" />
         </motion.div>
-        
-        <motion.h1 
+
+        <motion.h1
           className="text-2xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -44,8 +44,8 @@ export default function AuthCallbackPage() {
         >
           Completing Sign In...
         </motion.h1>
-        
-        <motion.p 
+
+        <motion.p
           className="text-slate-600 dark:text-slate-300"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -56,4 +56,10 @@ export default function AuthCallbackPage() {
       </motion.div>
     </div>
   );
+};
+
+export default function AuthCallbackPage() {
+  <Suspense fallback={null}>
+    <AuthCallbackComponent />
+  </Suspense>;
 }

@@ -37,15 +37,6 @@ export async function POST(request: NextRequest) {
     // Send login notification email
     const emailSent = await sendLoginNotification(user, deviceInfo);
 
-    // Log the login attempt (optional)
-    console.log("Login notification:", {
-      userId: user.id,
-      email: user.email,
-      deviceInfo,
-      emailSent,
-      timestamp: new Date().toISOString(),
-    });
-
     return NextResponse.json({
       success: true,
       emailSent,

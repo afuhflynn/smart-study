@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -70,12 +70,78 @@ export function QuizPanel({ document }: QuizPanelProps) {
   );
   const [questionCount, setQuestionCount] = useState(5);
 
+  console.log({ quizCompleted, quizMetadata });
+
   // Generate quiz when component loads
+  const generateNewQuiz = useCallback(() => {
+    return async () => {
+      setIsGenerating(true);
+      setError(null);
+
+      try {
+        // Use first 4000 characters of content to avoid token limits
+        const contentToUse = document.content.substring(0, 4000);
+
+        const response = await fetch("/api/quiz", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            content: contentToUse,
+            difficulty: difficulty,
+            questionCount: questionCount,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to generate quiz: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+          setQuestions(data.questions || []);
+          setQuizMetadata(data.metadata);
+          restartQuiz(); // Reset quiz state
+          toast.success(
+            `Generated ${data.questions?.length || 0} quiz questions!`
+          );
+        } else {
+          throw new Error(data.error || "Failed to generate quiz");
+        }
+      } catch (error) {
+        console.error("Quiz generation failed:", error);
+        const errorMessage =
+          error instanceof Error ? error.message : "Failed to generate quiz";
+        setError(errorMessage);
+        toast.error(errorMessage);
+
+        // Set fallback questions if generation fails
+        setQuestions([
+          {
+            id: "1",
+            type: "multiple-choice",
+            question: "What is the main topic of this document?",
+            options: [
+              "Primary concept discussed",
+              "Secondary topic mentioned",
+              "Unrelated concept",
+              "Background information",
+            ],
+            correctAnswer: "Primary concept discussed",
+            explanation: "This is the main focus of the provided content.",
+            difficulty: "Easy",
+          },
+        ]);
+      } finally {
+        setIsGenerating(false);
+      }
+    };
+  }, [difficulty, document.content, questionCount]);
   useEffect(() => {
     if (document && questions.length === 0) {
       generateNewQuiz();
     }
-  }, [document]);
+  }, [document, generateNewQuiz, questions.length]);
 
   const handleAnswerChange = (questionId: string, answer: string) => {
     setUserAnswers((prev) => ({
@@ -116,69 +182,6 @@ export function QuizPanel({ document }: QuizPanelProps) {
     setQuizCompleted(false);
     setResults([]);
     setError(null);
-  };
-
-  const generateNewQuiz = async () => {
-    setIsGenerating(true);
-    setError(null);
-
-    try {
-      // Use first 4000 characters of content to avoid token limits
-      const contentToUse = document.content.substring(0, 4000);
-
-      const response = await fetch("/api/quiz", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: contentToUse,
-          difficulty: difficulty,
-          questionCount: questionCount,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to generate quiz: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
-        setQuestions(data.questions || []);
-        setQuizMetadata(data.metadata);
-        restartQuiz(); // Reset quiz state
-        toast.success(
-          `Generated ${data.questions?.length || 0} quiz questions!`
-        );
-      } else {
-        throw new Error(data.error || "Failed to generate quiz");
-      }
-    } catch (error) {
-      console.error("Quiz generation failed:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to generate quiz";
-      setError(errorMessage);
-      toast.error(errorMessage);
-
-      // Set fallback questions if generation fails
-      setQuestions([
-        {
-          id: "1",
-          type: "multiple-choice",
-          question: "What is the main topic of this document?",
-          options: [
-            "Primary concept discussed",
-            "Secondary topic mentioned",
-            "Unrelated concept",
-            "Background information",
-          ],
-          correctAnswer: "Primary concept discussed",
-          explanation: "This is the main focus of the provided content.",
-          difficulty: "Easy",
-        },
-      ]);
-    } finally {
-      setIsGenerating(false);
-    }
   };
 
   const nextQuestion = () => {

@@ -33,10 +33,21 @@ export default function SignInPage() {
     try {
       await signIn.social({
         provider,
-        callbackURL: "/dashboard",
+        callbackURL: "/auth/signin",
       });
+
+      const response = await fetch("/api/auth/login-notification", {
+        method: "POST",
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        router.push("/dashboard");
+      }
     } catch (error) {
       console.error("Sign in error:", error);
+    } finally {
       setIsLoading(null);
     }
   };

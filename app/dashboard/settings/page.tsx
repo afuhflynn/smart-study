@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -12,17 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
 import {
-  Settings,
-  Bell,
-  Eye,
-  Volume2,
   Palette,
   Shield,
-  Trash2,
   Download,
-  Key,
   Save,
   Loader2,
   ArrowLeft,
@@ -30,14 +24,6 @@ import {
 import { motion } from "framer-motion";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
-import Link from "next/link";
-
-const voiceOptions = [
-  { value: "rachel", label: "Rachel (Female, American)" },
-  { value: "adam", label: "Adam (Male, American)" },
-  { value: "bella", label: "Bella (Female, British)" },
-  { value: "charlie", label: "Charlie (Male, British)" },
-];
 
 const languageOptions = [
   { value: "en", label: "English" },
@@ -47,20 +33,12 @@ const languageOptions = [
   { value: "it", label: "Italiano" },
 ];
 
-const fontOptions = [
-  { value: "inter", label: "Inter" },
-  { value: "roboto", label: "Roboto" },
-  { value: "open-sans", label: "Open Sans" },
-  { value: "lato", label: "Lato" },
-  { value: "georgia", label: "Georgia" },
-];
-
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isExportingData, setIsExportingData] = useState(false);
-  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  // const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [settings, setSettings] = useState({
     // Notifications
     emailNotifications: true,
@@ -95,7 +73,9 @@ export default function SettingsPage() {
   });
 
   // Define keys that should always be arrays for the Slider component
-  const sliderKeys = ["fontSize", "readingSpeed", "speechRate", "volume"];
+  const sliderKeys = useMemo(() => {
+    return ["fontSize", "readingSpeed", "speechRate", "volume"];
+  }, []);
 
   // Fetch user settings
   useEffect(() => {
@@ -130,9 +110,9 @@ export default function SettingsPage() {
     };
 
     fetchSettings();
-  }, []);
+  }, [sliderKeys]);
 
-  const updateSetting = (key: string, value: any) => {
+  const updateSetting = (key: string, value: boolean | string) => {
     // When a slider's onValueChange triggers, it already provides an array,
     // so no special handling is needed here for slider values.
     setSettings((prev) => ({ ...prev, [key]: value }));
@@ -196,33 +176,33 @@ export default function SettingsPage() {
       });
   };
 
-  const handleDeleteAccount = () => {
-    setIsDeletingAccount(true);
+  // const handleDeleteAccount = () => {
+  //   setIsDeletingAccount(true);
 
-    fetch("/api/user/delete-account", {
-      method: "DELETE",
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          toast.success(
-            "Data export prepared! Check your email for the download link."
-          );
-        } else {
-          throw new Error(data.error || "Export failed");
-        }
-      })
-      .catch((error) => {
-        console.error("Export error:", error);
-        toast.error("Failed to export data: " + error.message);
-      })
-      .finally(() => {
-        setIsDeletingAccount(false);
-      });
-    toast.error(
-      "Account deletion requires additional verification. Please contact support."
-    );
-  };
+  //   fetch("/api/user/delete-account", {
+  //     method: "DELETE",
+  //   })
+  //     .then((response) => response.json())
+  //     .then((data) => {
+  //       if (data.success) {
+  //         toast.success(
+  //           "Data export prepared! Check your email for the download link."
+  //         );
+  //       } else {
+  //         throw new Error(data.error || "Export failed");
+  //       }
+  //     })
+  //     .catch((error) => {
+  //       console.error("Export error:", error);
+  //       toast.error("Failed to export data: " + error.message);
+  //     })
+  //     .finally(() => {
+  //       setIsDeletingAccount(false);
+  //     });
+  //   toast.error(
+  //     "Account deletion requires additional verification. Please contact support."
+  //   );
+  // };
 
   if (isLoading) {
     return (
@@ -441,7 +421,7 @@ export default function SettingsPage() {
               </Card>
 
               {/* Danger Zone */}
-              <Card className="border-red-200 dark:border-red-800">
+              {/* <Card className="border-red-200 dark:border-red-800">
                 <CardHeader>
                   <CardTitle className="flex items-center text-red-600 dark:text-red-400">
                     <Trash2 className="h-5 w-5 mr-2" />
@@ -473,7 +453,7 @@ export default function SettingsPage() {
                     </Button>
                   </div>
                 </CardContent>
-              </Card>
+              </Card> */}
             </div>
           </div>
         </motion.div>

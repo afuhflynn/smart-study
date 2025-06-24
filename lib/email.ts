@@ -392,7 +392,16 @@ export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
 };
 
 // Send login notification
-export const sendLoginNotification = async (user: User, deviceInfo: any) => {
+export const sendLoginNotification = async (
+  user: User,
+  deviceInfo: {
+    device: string;
+    browser: string;
+    os: string;
+    ip: string;
+    location: string;
+  }
+) => {
   const template = emailTemplates.loginNotification({
     userName: user.name || "User",
     device: deviceInfo.device || "Unknown Device",

@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 
-export async function GET(_: NextRequest) {
+export async function GET() {
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -63,7 +63,10 @@ export async function GET(_: NextRequest) {
     };
 
     const preferences = user.preferences
-      ? { ...defaultPreferences, ...(user.preferences as any) }
+      ? {
+          ...defaultPreferences,
+          ...(user.preferences as Record<string, string>),
+        }
       : defaultPreferences;
 
     return NextResponse.json({ preferences });
@@ -94,7 +97,8 @@ export async function PUT(request: NextRequest) {
       select: { preferences: true },
     });
 
-    const currentPreferences = (currentUser?.preferences as any) || {};
+    const currentPreferences =
+      (currentUser?.preferences as Record<string, string>) || {};
     const newPreferences = {
       ...currentPreferences,
       ...body,

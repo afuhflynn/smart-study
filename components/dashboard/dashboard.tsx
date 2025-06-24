@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSession } from "@/lib/auth-client";
 import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileUpload } from "@/components/upload/file-upload";
@@ -11,19 +11,7 @@ import { RecentDocuments } from "./recent-documents";
 import { ReadingStats } from "./reading-stats";
 import { Plus, BookOpen, Clock, TrendingUp, Zap } from "lucide-react";
 import { toast } from "sonner";
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-
-type UserStats = {
-  documentsRead: number;
-  completionRate: number;
-  hoursSaved: number;
-  readingConsistency: number;
-  quizScore: number;
-  totalQuizzes: number;
-  readingSpeed: number;
-  wordsPerSession: number;
-};
 
 export function Dashboard() {
   const [showUpload, setShowUpload] = useState(false);
@@ -153,34 +141,6 @@ export function Dashboard() {
               <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <Plus className="mr-2 h-5 w-5 relative z-10 group-hover:rotate-90 transition-transform duration-300" />
               <span className="relative z-10">Upload Document</span>
-            </Button>
-          </motion.div>
-
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <Button
-              asChild
-              variant="outline"
-              size="lg"
-              className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-blue-900/20 dark:hover:to-indigo-900/20 border-2 hover:border-blue-300 dark:hover:border-blue-600"
-            >
-              <Link href="/dashboard/profile">
-                <BookOpen className="mr-2 h-5 w-5" />
-                My Profile
-              </Link>
-            </Button>
-          </motion.div>
-
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <Button
-              asChild
-              variant="outline"
-              size="lg"
-              className="hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 dark:hover:from-emerald-900/20 dark:hover:to-teal-900/20 border-2 hover:border-emerald-300 dark:hover:border-emerald-600"
-            >
-              <Link href="/dashboard/settings">
-                <TrendingUp className="mr-2 h-5 w-5" />
-                Settings
-              </Link>
             </Button>
           </motion.div>
         </div>

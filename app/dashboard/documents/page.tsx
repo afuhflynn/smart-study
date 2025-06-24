@@ -61,36 +61,35 @@ export default function DocumentsPage() {
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
+    const fetchDocuments = async () => {
+      try {
+        setIsLoading(true);
+        const params = new URLSearchParams({
+          page: currentPage.toString(),
+          limit: "12",
+          sortBy,
+          sortOrder,
+          ...(searchQuery && { search: searchQuery }),
+        });
+
+        const response = await fetch(`/api/documents?${params}`);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch documents");
+        }
+
+        const data = await response.json();
+        setDocuments(data.documents || []);
+        setTotalPages(data.pagination?.pages || 1);
+      } catch (error) {
+        console.error("Failed to fetch documents:", error);
+        toast.error("Failed to load documents");
+      } finally {
+        setIsLoading(false);
+      }
+    };
     fetchDocuments();
   }, [searchQuery, sortBy, sortOrder, currentPage]);
-
-  const fetchDocuments = async () => {
-    try {
-      setIsLoading(true);
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: "12",
-        sortBy,
-        sortOrder,
-        ...(searchQuery && { search: searchQuery }),
-      });
-
-      const response = await fetch(`/api/documents?${params}`);
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch documents");
-      }
-
-      const data = await response.json();
-      setDocuments(data.documents || []);
-      setTotalPages(data.pagination?.pages || 1);
-    } catch (error) {
-      console.error("Failed to fetch documents:", error);
-      toast.error("Failed to load documents");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleDeleteDocument = async (documentId: string, title: string) => {
     if (!confirm(`Are you sure you want to delete "${title}"?`)) {

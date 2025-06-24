@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
@@ -74,7 +74,7 @@ export function AudioPlayer({
   const [isGenerating, setIsGenerating] = useState(false);
   const [audioData, setAudioData] = useState<AudioData | null>(null);
   const [availableVoices, setAvailableVoices] = useState<Voice[]>([]);
-  const [selectedVoice, setSelectedVoice] = useState("aria");
+  const selectedVoice = "aria";
   const [currentWordIndex, setCurrentWordIndex] = useState(-1);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
@@ -88,13 +88,125 @@ export function AudioPlayer({
     fetchVoices();
   }, []);
 
+  const getCurrentChapterContent = useCallback(() => {
+    const chapter = document.chapters[currentChapter];
+    const nextChapter = document.chapters[currentChapter + 1];
+
+    const startIndex = chapter.startIndex;
+    const endIndex = nextChapter
+      ? nextChapter.startIndex
+      : document.content.length;
+
+    return document.content.slice(startIndex, endIndex);
+  }, [currentChapter, document.chapters, document.content]);
+
+  const generateAudioForChapter = useCallback(() => {
+    return async () => {
+      if (!document || currentChapter < 0) return;
+
+      setIsGenerating(true);
+      setError(null);
+      setWarning(null);
+
+      try {
+        const chapterContent = getCurrentChapterContent();
+
+        // Clean the content for better TTS
+        const cleanContent = chapterContent
+          .replace(/#{1,6}\s/g, "") // Remove markdown headers
+          .replace(/\*\*(.*?)\*\*/g, "$1") // Remove bold markdown
+          .replace(/\*(.*?)\*/g, "$1") // Remove italic markdown
+          .replace(/\n\s*\n/g, ". ") // Replace double newlines with periods
+          .replace(/\n/g, " ") // Replace single newlines with spaces
+          .trim();
+
+        const response = await fetch("/api/tts", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            text: cleanContent,
+            voice: selectedVoice,
+            speed: playbackSpeed,
+            chapterId: document.chapters[currentChapter].id,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          throw new Error(
+            "Server returned HTML instead of JSON. Please check the API configuration."
+          );
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+          setAudioData(data.audio);
+          setDuration(data.audio.duration);
+          setCurrentTime(0);
+          setCurrentWordIndex(-1);
+
+          if (data.warning) {
+            console.warn("TTS warning:", data.warning);
+          }
+        } else {
+          throw new Error(data.error || "Failed to generate audio");
+        }
+      } catch (error) {
+        console.error("Error generating audio:", error);
+
+        if (error instanceof Error) {
+          setError(error.message);
+        } else {
+          setError("Failed to generate audio");
+        }
+      } finally {
+        setIsGenerating(false);
+      }
+    };
+  }, [currentChapter, document, getCurrentChapterContent, playbackSpeed]);
+
   // Generate audio when chapter changes
   useEffect(() => {
     if (document && currentChapter >= 0) {
       generateAudioForChapter();
     }
-  }, [document, currentChapter, selectedVoice]);
+  }, [document, currentChapter, selectedVoice, generateAudioForChapter]);
 
+  const startWordTracking = useCallback(() => {
+    return () => {
+      if (!audioData?.wordTimestamps) return;
+
+      intervalRef.current = setInterval(() => {
+        if (audioRef.current) {
+          const currentTime = audioRef.current.currentTime;
+          setCurrentTime(currentTime);
+
+          // Find current word being spoken
+          const wordIndex = audioData.wordTimestamps.findIndex(
+            (timestamp, index) => {
+              const nextTimestamp = audioData.wordTimestamps[index + 1];
+              return (
+                currentTime >= timestamp.start &&
+                (!nextTimestamp || currentTime < nextTimestamp.start)
+              );
+            }
+          );
+
+          if (wordIndex !== -1 && wordIndex !== currentWordIndex) {
+            setCurrentWordIndex(wordIndex);
+            onWordHighlight?.(wordIndex);
+          }
+        }
+      }, 100);
+    };
+  }, [audioData?.wordTimestamps, currentWordIndex, onWordHighlight]);
   // Handle audio playback
   useEffect(() => {
     if (audioRef.current && audioData) {
@@ -109,7 +221,7 @@ export function AudioPlayer({
         stopWordTracking();
       }
     }
-  }, [isPlaying, audioData]);
+  }, [isPlaying, audioData, startWordTracking]);
 
   // Update playback speed
   useEffect(() => {
@@ -132,7 +244,7 @@ export function AudioPlayer({
         console.error("Auto-play failed:", err);
       });
     }
-  }, [audioData, currentChapter]);
+  }, [audioData, currentChapter, isPlaying]);
   const fetchVoices = async () => {
     try {
       const response = await fetch("/api/tts");
@@ -190,115 +302,6 @@ export function AudioPlayer({
         },
       ]);
     }
-  };
-
-  const getCurrentChapterContent = () => {
-    const chapter = document.chapters[currentChapter];
-    const nextChapter = document.chapters[currentChapter + 1];
-
-    const startIndex = chapter.startIndex;
-    const endIndex = nextChapter
-      ? nextChapter.startIndex
-      : document.content.length;
-
-    return document.content.slice(startIndex, endIndex);
-  };
-
-  const generateAudioForChapter = async () => {
-    if (!document || currentChapter < 0) return;
-
-    setIsGenerating(true);
-    setError(null);
-    setWarning(null);
-
-    try {
-      const chapterContent = getCurrentChapterContent();
-
-      // Clean the content for better TTS
-      const cleanContent = chapterContent
-        .replace(/#{1,6}\s/g, "") // Remove markdown headers
-        .replace(/\*\*(.*?)\*\*/g, "$1") // Remove bold markdown
-        .replace(/\*(.*?)\*/g, "$1") // Remove italic markdown
-        .replace(/\n\s*\n/g, ". ") // Replace double newlines with periods
-        .replace(/\n/g, " ") // Replace single newlines with spaces
-        .trim();
-
-      const response = await fetch("/api/tts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          text: cleanContent,
-          voice: selectedVoice,
-          speed: playbackSpeed,
-          chapterId: document.chapters[currentChapter].id,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error(
-          "Server returned HTML instead of JSON. Please check the API configuration."
-        );
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
-        setAudioData(data.audio);
-        setDuration(data.audio.duration);
-        setCurrentTime(0);
-        setCurrentWordIndex(-1);
-
-        if (data.warning) {
-          console.warn("TTS warning:", data.warning);
-        }
-      } else {
-        throw new Error(data.error || "Failed to generate audio");
-      }
-    } catch (error) {
-      console.error("Error generating audio:", error);
-
-      if (error instanceof Error) {
-        setError(error.message);
-      } else {
-        setError("Failed to generate audio");
-      }
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const startWordTracking = () => {
-    if (!audioData?.wordTimestamps) return;
-
-    intervalRef.current = setInterval(() => {
-      if (audioRef.current) {
-        const currentTime = audioRef.current.currentTime;
-        setCurrentTime(currentTime);
-
-        // Find current word being spoken
-        const wordIndex = audioData.wordTimestamps.findIndex(
-          (timestamp, index) => {
-            const nextTimestamp = audioData.wordTimestamps[index + 1];
-            return (
-              currentTime >= timestamp.start &&
-              (!nextTimestamp || currentTime < nextTimestamp.start)
-            );
-          }
-        );
-
-        if (wordIndex !== -1 && wordIndex !== currentWordIndex) {
-          setCurrentWordIndex(wordIndex);
-          onWordHighlight?.(wordIndex);
-        }
-      }
-    }, 100);
   };
 
   const stopWordTracking = () => {
@@ -382,6 +385,7 @@ export function AudioPlayer({
   };
   const canAdvanceToNext = currentChapter < document.chapters.length - 1;
   const canGoToPrevious = currentChapter > 0;
+  console.log(canGoToPrevious);
 
   return (
     <motion.div

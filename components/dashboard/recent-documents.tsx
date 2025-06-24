@@ -12,7 +12,6 @@ import {
   MoreHorizontal,
   Trash2,
   Eye,
-  Edit,
   Loader,
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -81,7 +80,8 @@ export function RecentDocuments({
 
       const data = await response.json();
       return data.documents;
-    } catch (error: Error | any) {
+      // @ts-expect-error: error is of type 'unknown', casting to 'any' to access properties
+    } catch (error: Error) {
       console.error("Failed to fetch documents:", error);
       setError(error.message);
       toast.error("Failed to load documents");
@@ -101,7 +101,7 @@ export function RecentDocuments({
 
   useEffect(() => {
     refetch();
-  }, [isUploadComplete]);
+  }, [isUploadComplete, refetch]);
 
   const handleDeleteDocument = async (documentId: string, title: string) => {
     if (!confirm(`Are you sure you want to delete "${title}"?`)) {

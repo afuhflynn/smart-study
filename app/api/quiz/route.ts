@@ -135,17 +135,30 @@ export async function POST(request: NextRequest) {
         }
 
         // Ensure each question has required fields and proper format
-        questions = questions.map((q: any, index: number) => ({
-          id: q.id || `q-${Date.now()}-${index}`,
-          type: q.type || "multiple-choice",
-          question: q.question || `Question ${index + 1}`,
-          options:
-            q.options ||
-            (q.type === "true-false" ? ["True", "False"] : undefined),
-          correctAnswer: q.correctAnswer || "Answer not provided",
-          explanation: q.explanation || "Explanation not provided",
-          difficulty: q.difficulty || "Medium",
-        }));
+        questions = questions.map(
+          (
+            q: {
+              id: string;
+              type: string;
+              question: string;
+              options: unknown[];
+              correctAnswer: string;
+              explanation: string;
+              difficulty: string;
+            },
+            index: number
+          ) => ({
+            id: q.id || `q-${Date.now()}-${index}`,
+            type: q.type || "multiple-choice",
+            question: q.question || `Question ${index + 1}`,
+            options:
+              q.options ||
+              (q.type === "true-false" ? ["True", "False"] : undefined),
+            correctAnswer: q.correctAnswer || "Answer not provided",
+            explanation: q.explanation || "Explanation not provided",
+            difficulty: q.difficulty || "Medium",
+          })
+        );
       } catch (parseError) {
         console.error("Failed to parse quiz response:", parseError);
         console.error("Raw response:", responseText);

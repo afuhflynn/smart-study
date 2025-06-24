@@ -72,7 +72,7 @@ export function Footer() {
 
               <div className="flex space-x-4">
                 {socialLinks.map((social) => (
-                  <div>
+                  <div key={social.name}>
                     <Link
                       href={social.href}
                       className={`text-gray-400 ${social.color} transition-all duration-300 p-2 rounded-lg hover:bg-white/10`}

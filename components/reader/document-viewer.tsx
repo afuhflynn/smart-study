@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import {
   ChevronLeft,
@@ -46,16 +45,20 @@ export function DocumentViewer({
   const contentRef = useRef<HTMLDivElement>(null);
   const { data: session } = useSession();
 
-  const handleScroll = useCallback(() => {
-    if (contentRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = contentRef.current;
-      const progress = (scrollTop / (scrollHeight - clientHeight)) * 100;
-      setReadingProgress(Math.min(progress, 100));
+  console.log(sessionStartTime);
+  const getCurrentChapterContent = useCallback(() => {
+    return () => {
+      const chapter = document.chapters[currentChapter];
+      const nextChapter = document.chapters[currentChapter + 1];
 
-      // Track reading progress for analytics
-      trackReadingProgress(Math.min(progress, 100));
-    }
-  }, [document.id, currentChapter]);
+      const startIndex = chapter.startIndex;
+      const endIndex = nextChapter
+        ? nextChapter.startIndex
+        : document.content.length;
+
+      return document.content.slice(startIndex, endIndex);
+    };
+  }, [currentChapter, document.chapters, document.content]);
 
   const trackReadingProgress = useCallback(
     async (progress: number) => {
@@ -64,7 +67,7 @@ export function DocumentViewer({
       try {
         const chapter = document.chapters[currentChapter];
         const chapterContent = getCurrentChapterContent();
-        const wordsInChapter = chapterContent.split(/\s+/).length;
+        const wordsInChapter = chapterContent.toString().split(/\s+/).length;
         const wordsRead = Math.floor((progress / 100) * wordsInChapter);
 
         await fetch("/api/track-reading", {
@@ -82,23 +85,27 @@ export function DocumentViewer({
         console.error("Failed to track reading progress:", error);
       }
     },
-    [document.id, document.chapters, currentChapter, session]
+    [
+      document.id,
+      document.chapters,
+      currentChapter,
+      session,
+      getCurrentChapterContent,
+    ]
   );
+  const handleScroll = useCallback(() => {
+    if (contentRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = contentRef.current;
+      const progress = (scrollTop / (scrollHeight - clientHeight)) * 100;
+      setReadingProgress(Math.min(progress, 100));
+
+      // Track reading progress for analytics
+      trackReadingProgress(Math.min(progress, 100));
+    }
+  }, [trackReadingProgress]);
 
   // Start reading session when component mounts
-  useEffect(() => {
-    if (session?.user && !readingSessionActive) {
-      startReadingSession();
-    }
-
-    return () => {
-      if (readingSessionActive) {
-        endReadingSession();
-      }
-    };
-  }, [session]);
-
-  const startReadingSession = async () => {
+  const startReadingSession = useCallback(async () => {
     if (!session?.user) return;
 
     try {
@@ -119,9 +126,15 @@ export function DocumentViewer({
     } catch (error) {
       console.error("Failed to start reading session:", error);
     }
-  };
+  }, [
+    currentChapter,
+    document.chapters,
+    document.id,
+    readingProgress,
+    session?.user,
+  ]);
 
-  const endReadingSession = async () => {
+  const endReadingSession = useCallback(async () => {
     if (!session?.user || !readingSessionActive) return;
 
     try {
@@ -144,26 +157,33 @@ export function DocumentViewer({
     } catch (error) {
       console.error("Failed to end reading session:", error);
     }
-  };
+  }, [
+    currentChapter,
+    document.chapters,
+    document.id,
+    readingProgress,
+    readingSessionActive,
+    session?.user,
+    wordsReadInSession,
+  ]);
+  useEffect(() => {
+    if (session?.user && !readingSessionActive) {
+      startReadingSession();
+    }
 
-  const getCurrentChapterContent = () => {
-    const chapter = document.chapters[currentChapter];
-    const nextChapter = document.chapters[currentChapter + 1];
-
-    const startIndex = chapter.startIndex;
-    const endIndex = nextChapter
-      ? nextChapter.startIndex
-      : document.content.length;
-
-    return document.content.slice(startIndex, endIndex);
-  };
+    return () => {
+      if (readingSessionActive) {
+        endReadingSession();
+      }
+    };
+  }, [session, endReadingSession, readingSessionActive, startReadingSession]);
 
   const formatContentWithHighlight = (content: string) => {
     let globalWordIndex = 0;
 
     return content
       .split("\n")
-      .map((line, lineIndex) => {
+      .map((line) => {
         if (line.startsWith("# ")) {
           return `<h1 class="text-3xl font-bold mb-6 text-gray-900 dark:text-white leading-tight">${line.slice(
             2
@@ -255,7 +275,12 @@ export function DocumentViewer({
       endReadingSession();
       setTimeout(() => startReadingSession(), 100);
     }
-  }, [currentChapter]);
+  }, [
+    currentChapter,
+    endReadingSession,
+    readingSessionActive,
+    startReadingSession,
+  ]);
 
   return (
     <div className="h-full flex bg-gray-50 dark:bg-gray-900">
@@ -408,7 +433,9 @@ export function DocumentViewer({
           >
             <div
               dangerouslySetInnerHTML={{
-                __html: formatContentWithHighlight(getCurrentChapterContent()),
+                __html: formatContentWithHighlight(
+                  getCurrentChapterContent().toString()
+                ),
               }}
               className="prose prose-lg max-w-none leading-relaxed"
             />

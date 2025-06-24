@@ -508,64 +508,77 @@ export default function ProfilePage() {
                     ))
                   ) : userStats?.achievements ? (
                     userStats.achievements
-                      .sort((a: any, b: any) => {
-                        if (a.earned && !b.earned) return -1;
-                        if (!a.earned && b.earned) return 1;
-                        return b.progress - a.progress;
-                      })
+                      .sort(
+                        (
+                          a: { earned: boolean; progress: number },
+                          b: { earned: boolean; progress: number }
+                        ) => {
+                          if (a.earned && !b.earned) return -1;
+                          if (!a.earned && b.earned) return 1;
+                          return b.progress - a.progress;
+                        }
+                      )
                       .slice(0, 6)
-                      .map((achievement: any, index: number) => {
-                        const IconComponent = getAchievementIcon(
-                          achievement.type
-                        );
-                        return (
-                          <div
-                            key={achievement.type}
-                            className={`flex items-center space-x-3 p-3 rounded-lg ${
-                              achievement.earned
-                                ? "bg-green-50 dark:bg-green-900/20"
-                                : "bg-gray-50 dark:bg-gray-800"
-                            }`}
-                          >
+                      .map(
+                        (achievement: {
+                          type: string;
+                          earned: boolean;
+                          title: string;
+                          description: string;
+                          progress: number;
+                        }) => {
+                          const IconComponent = getAchievementIcon(
+                            achievement.type
+                          );
+                          return (
                             <div
-                              className={`p-2 rounded-full ${getAchievementColor(
+                              key={achievement.type}
+                              className={`flex items-center space-x-3 p-3 rounded-lg ${
                                 achievement.earned
-                              )}`}
+                                  ? "bg-green-50 dark:bg-green-900/20"
+                                  : "bg-gray-50 dark:bg-gray-800"
+                              }`}
                             >
-                              <IconComponent className="h-4 w-4 text-white" />
-                            </div>
-                            <div className="flex-1">
-                              <h4
-                                className={`text-sm font-medium ${
+                              <div
+                                className={`p-2 rounded-full ${getAchievementColor(
                                   achievement.earned
-                                    ? "text-gray-900 dark:text-white"
-                                    : "text-gray-500 dark:text-gray-400"
-                                }`}
+                                )}`}
                               >
-                                {achievement.title}
-                              </h4>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                {achievement.description}
-                              </p>
-                              {!achievement.earned && (
-                                <div className="mt-1">
-                                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
-                                    <div
-                                      className="bg-blue-600 h-1 rounded-full transition-all duration-300"
-                                      style={{
-                                        width: `${Math.min(
-                                          100,
-                                          achievement.progress
-                                        )}%`,
-                                      }}
-                                    />
+                                <IconComponent className="h-4 w-4 text-white" />
+                              </div>
+                              <div className="flex-1">
+                                <h4
+                                  className={`text-sm font-medium ${
+                                    achievement.earned
+                                      ? "text-gray-900 dark:text-white"
+                                      : "text-gray-500 dark:text-gray-400"
+                                  }`}
+                                >
+                                  {achievement.title}
+                                </h4>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                  {achievement.description}
+                                </p>
+                                {!achievement.earned && (
+                                  <div className="mt-1">
+                                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
+                                      <div
+                                        className="bg-blue-600 h-1 rounded-full transition-all duration-300"
+                                        style={{
+                                          width: `${Math.min(
+                                            100,
+                                            achievement.progress
+                                          )}%`,
+                                        }}
+                                      />
+                                    </div>
                                   </div>
-                                </div>
-                              )}
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })
+                          );
+                        }
+                      )
                   ) : (
                     <p className="text-gray-500 dark:text-gray-400 text-center py-4">
                       Start reading to unlock achievements!

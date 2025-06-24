@@ -163,14 +163,23 @@ export async function GET() {
 
       const data = await response.json();
 
-      const formattedVoices = data.voices.map((voice: any) => ({
-        id: voice.voice_id,
-        name: voice.name,
-        category: voice.category,
-        description: voice.description || `${voice.name} voice`,
-        preview_url: voice.preview_url,
-        labels: voice.labels || {},
-      }));
+      const formattedVoices = data.voices.map(
+        (voice: {
+          voice_id: string;
+          name: string;
+          category: string;
+          description: string;
+          preview_url: string;
+          labels: string;
+        }) => ({
+          id: voice.voice_id,
+          name: voice.name,
+          category: voice.category,
+          description: voice.description || `${voice.name} voice`,
+          preview_url: voice.preview_url,
+          labels: voice.labels || {},
+        })
+      );
 
       return NextResponse.json({
         success: true,

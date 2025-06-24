@@ -33,108 +33,120 @@ interface UploadedFile {
 export function FileUpload({ onClose, setIsUploadComplete }: FileUploadProps) {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    const newFiles = acceptedFiles.map((file) => ({
-      file,
-      progress: 0,
-      status: "uploading" as const,
-      id: Math.random().toString(36).substr(2, 9),
-    }));
-
-    setUploadedFiles((prev) => [...prev, ...newFiles]);
-
-    // Simulate upload and processing
-    newFiles.forEach((uploadedFile) => {
-      simulateUpload(uploadedFile.id, uploadedFile.file);
-    });
-
-    toast.success(`${acceptedFiles.length} file(s) added for processing`);
-  }, []);
-
-  const simulateUpload = (fileId: string, file: File) => {
-    const updateProgress = (
-      progress: number,
-      status?: UploadedFile["status"]
+  const processFile = useCallback(
+    async (
+      file: File,
+      fileId: string,
+      updateProgress: (
+        progress: number,
+        status?: UploadedFile["status"]
+      ) => void
     ) => {
-      setUploadedFiles((prev) =>
-        prev.map((file) =>
-          file.id === fileId
-            ? { ...file, progress, ...(status && { status }) }
-            : file
-        )
-      );
-    };
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
 
-    // Simulate upload progress
-    let uploadProgress = 0;
-    const uploadInterval = setInterval(() => {
-      uploadProgress += Math.random() * 15;
-      if (uploadProgress >= 100) {
-        uploadProgress = 100;
-        clearInterval(uploadInterval);
-        updateProgress(100, "processing");
+        // Determine file type
+        let type = "text";
+        if (file.type.includes("image/")) {
+          type = "image";
+        } else if (file.type.includes("pdf")) {
+          type = "pdf";
+        }
+        formData.append("type", type);
 
-        // Actually process the file
-        setTimeout(() => processFile(file, fileId, updateProgress), 500);
-      } else {
-        updateProgress(uploadProgress);
+        const response = await fetch("/api/extract", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to process file");
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+          updateProgress(100, "completed");
+          toast.success(`${file.name} processed successfully!`);
+
+          // Update the file with the actual document ID from the server
+          setUploadedFiles((prev) =>
+            prev.map((f) =>
+              f.id === fileId ? { ...f, documentId: result.documentId } : f
+            )
+          );
+          setIsUploadComplete((prev) => !prev);
+        } else {
+          throw new Error(result.error || "Processing failed");
+        }
+      } catch (error) {
+        console.error("File processing error:", error);
+        updateProgress(0, "error");
+        toast.error(
+          `Failed to process ${file.name}: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
       }
-    }, 200);
-  };
+    },
+    [setIsUploadComplete]
+  );
 
-  const processFile = async (
-    file: File,
-    fileId: string,
-    updateProgress: (progress: number, status?: UploadedFile["status"]) => void
-  ) => {
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      // Determine file type
-      let type = "text";
-      if (file.type.includes("image/")) {
-        type = "image";
-      } else if (file.type.includes("pdf")) {
-        type = "pdf";
-      }
-      formData.append("type", type);
-
-      const response = await fetch("/api/extract", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to process file");
-      }
-
-      const result = await response.json();
-
-      if (result.success) {
-        updateProgress(100, "completed");
-        toast.success(`${file.name} processed successfully!`);
-
-        // Update the file with the actual document ID from the server
+  const simulateUpload = useCallback(
+    (fileId: string, file: File) => {
+      const updateProgress = (
+        progress: number,
+        status?: UploadedFile["status"]
+      ) => {
         setUploadedFiles((prev) =>
-          prev.map((f) =>
-            f.id === fileId ? { ...f, documentId: result.documentId } : f
+          prev.map((file) =>
+            file.id === fileId
+              ? { ...file, progress, ...(status && { status }) }
+              : file
           )
         );
-        setIsUploadComplete((prev) => !prev);
-      } else {
-        throw new Error(result.error || "Processing failed");
-      }
-    } catch (error) {
-      console.error("File processing error:", error);
-      updateProgress(0, "error");
-      toast.error(
-        `Failed to process ${file.name}: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
-    }
-  };
+      };
+
+      // Simulate upload progress
+      let uploadProgress = 0;
+      const uploadInterval = setInterval(() => {
+        uploadProgress += Math.random() * 15;
+        if (uploadProgress >= 100) {
+          uploadProgress = 100;
+          clearInterval(uploadInterval);
+          updateProgress(100, "processing");
+
+          // Actually process the file
+          setTimeout(() => processFile(file, fileId, updateProgress), 500);
+        } else {
+          updateProgress(uploadProgress);
+        }
+      }, 200);
+    },
+    [processFile]
+  );
+
+  const onDrop = useCallback(
+    (acceptedFiles: File[]) => {
+      const newFiles = acceptedFiles.map((file) => ({
+        file,
+        progress: 0,
+        status: "uploading" as const,
+        id: Math.random().toString(36).substring(2, 9),
+      }));
+
+      setUploadedFiles((prev) => [...prev, ...newFiles]);
+
+      // Simulate upload and processing
+      newFiles.forEach((uploadedFile) => {
+        simulateUpload(uploadedFile.id, uploadedFile.file);
+      });
+
+      toast.success(`${acceptedFiles.length} file(s) added for processing`);
+    },
+    [simulateUpload]
+  );
 
   const removeFile = (fileId: string) => {
     setUploadedFiles((prev) => prev.filter((file) => file.id !== fileId));
@@ -160,6 +172,7 @@ export function FileUpload({ onClose, setIsUploadComplete }: FileUploadProps) {
 
   const getFileIcon = (fileName: string) => {
     const extension = fileName.split(".").pop()?.toLowerCase();
+
     if (
       ["png", "jpg", "jpeg", "gif", "bmp", "webp"].includes(extension || "")
     ) {

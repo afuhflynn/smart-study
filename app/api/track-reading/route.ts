@@ -90,6 +90,7 @@ export async function POST(request: NextRequest) {
             progressEnd: data.progress || activeSession.progressEnd,
             wordsRead: data.wordsRead || activeSession.wordsRead,
             isCompleted: (data.progress || 0) >= 100,
+            totalMinutes,
           },
         });
 

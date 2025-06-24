@@ -11,10 +11,11 @@ const updateDocumentSchema = z.object({
 });
 
 export async function GET(
-  request: NextRequest,
+  _: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = await params;
     const session = await auth.api.getSession({
       headers: await headers(),
     });
@@ -25,7 +26,7 @@ export async function GET(
 
     const document = await prisma.document.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: session.user.id,
       },
       include: {
@@ -45,14 +46,15 @@ export async function GET(
 
     const formattedDocument = {
       ...document,
-      chapters: (document.chapters as any[]) || [],
-      metadata: (document.metadata as any) || {},
+      chapters: document.chapters || [],
+      metadata: document.metadata || {},
       lastRead: document.updatedAt,
-      category: (document.metadata as any)?.category || "General",
+      category:
+        (document.metadata as Record<string, string>)?.category || "General",
       quizResults: document.quizResults.map((result) => ({
         ...result,
-        questions: result.questions as any,
-        answers: result.answers as any,
+        questions: result.questions,
+        answers: result.answers,
       })),
     };
 
@@ -71,6 +73,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = await params;
     const session = await auth.api.getSession({
       headers: await headers(),
     });
@@ -84,7 +87,7 @@ export async function PUT(
 
     const document = await prisma.document.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: session.user.id,
       },
     });
@@ -131,10 +134,11 @@ export async function PUT(
 }
 
 export async function DELETE(
-  request: NextRequest,
+  _: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = await params;
     const session = await auth.api.getSession({
       headers: await headers(),
     });
@@ -145,7 +149,7 @@ export async function DELETE(
 
     const document = await prisma.document.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: session.user.id,
       },
     });

@@ -44,8 +44,9 @@ export default function TermsPage() {
               </div>
 
               <p className="mb-4">
-                By accessing and using SmartStudy ("Service"), you accept and
-                agree to be bound by the terms and provision of this agreement.
+                By accessing and using SmartStudy (&quot;Service&quot;), you
+                accept and agree to be bound by the terms and provision of this
+                agreement.
               </p>
 
               <p className="mb-4">
@@ -266,7 +267,9 @@ export default function TermsPage() {
                 Service Availability
               </h3>
               <ul className="mb-6">
-                <li>The service is provided "as is" without warranties</li>
+                <li>
+                  The service is provided &quot;as is&quot; without warranties
+                </li>
                 <li>We do not guarantee continuous, uninterrupted access</li>
                 <li>Features may be modified or discontinued at any time</li>
                 <li>Third-party services may affect service availability</li>

@@ -161,6 +161,7 @@ model ReadingSession {
   chapterId     String?
   startTime     DateTime
   endTime       DateTime?
+  totalMinutes  Int?
   wordsRead     Int       @default(0)
   progressStart Float     @default(0)
   progressEnd   Float     @default(0)

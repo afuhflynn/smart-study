@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -125,7 +125,7 @@ export async function GET(request: NextRequest) {
         orderBy: { updatedAt: "desc" },
       }),
     ]);
-
+    console.log({ todayDocuments, recentReadingSessions });
     // Calculate reading statistics
     const totalWordsRead = totalReadingSessions.reduce(
       (sum, session) => sum + session.wordsRead,
@@ -168,9 +168,10 @@ export async function GET(request: NextRequest) {
     const timeAtUserSpeed = totalReadingTimeMinutes;
     const hoursSaved = Math.max(0, (timeAtAverageSpeed - timeAtUserSpeed) / 60);
 
+    console.log({ userEfficiencyFactor });
     // Calculate reading streak
     let currentStreak = 0;
-    let maxStreak = 0;
+    const maxStreak = 0;
     let tempStreak = 0;
 
     // Group documents by date and check for consecutive days

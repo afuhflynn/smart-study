@@ -83,10 +83,10 @@ export async function GET(request: NextRequest) {
 
     const formattedDocuments = documents.map((doc) => ({
       ...doc,
-      chapters: (doc.chapters as any[]) || [],
-      metadata: (doc.metadata as any) || {},
+      chapters: doc.chapters || [],
+      metadata: doc.metadata || {},
       lastRead: doc.updatedAt,
-      category: (doc.metadata as any)?.category || "General",
+      category: (doc.metadata as Record<string, string>)?.category || "General",
     }));
 
     return NextResponse.json({

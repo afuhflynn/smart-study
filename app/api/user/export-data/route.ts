@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 import { generateUserDataPDF } from "@/lib/pdf-generator";
 import { sendDataExportNotification } from "@/lib/email";
 
-export async function POST(_: NextRequest) {
+export async function POST() {
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -140,8 +140,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Check if token exists and is valid
-    const tokenData = await prisma.dataExport.findUnique({
+    // Check if token exists and is valid and delete and send it as response.
+    const tokenData = await prisma.dataExport.delete({
       where: {
         userId: foundUser.id,
         token,

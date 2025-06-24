@@ -1,19 +1,19 @@
 import { jsPDF } from "jspdf";
-import { User, Document, QuizResult } from "@prisma/client";
+// import { User, Document, QuizResult } from "@prisma/client";
 import { prisma } from "./prisma";
 
-interface UserDataExport {
-  user: User;
-  documents: Document[];
-  quizResults: QuizResult[];
-  stats: {
-    totalDocuments: number;
-    totalWords: number;
-    averageQuizScore: number;
-    totalReadingTime: number;
-    joinDate: string;
-  };
-}
+// interface UserDataExport {
+//   user: User;
+//   documents: Document[];
+//   quizResults: QuizResult[];
+//   stats: {
+//     totalDocuments: number;
+//     totalWords: number;
+//     averageQuizScore: number;
+//     totalReadingTime: number;
+//     joinDate: string;
+//   };
+// }
 
 export async function generateUserDataPDF(userId: string): Promise<Buffer> {
   // Fetch all user data
