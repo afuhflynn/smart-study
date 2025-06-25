@@ -68,7 +68,7 @@ export function QuizPanel({ document }: QuizPanelProps) {
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
     "medium"
   );
-  const [questionCount, setQuestionCount] = useState(5);
+  const [questionCount, setQuestionCount] = useState<number>(10);
 
   console.log({ quizCompleted, quizMetadata });
 
@@ -482,6 +482,10 @@ export function QuizPanel({ document }: QuizPanelProps) {
                 <option value={3}>3</option>
                 <option value={5}>5</option>
                 <option value={10}>10</option>
+                <option value={15}>15</option>
+                <option value={20}>20</option>
+                <option value={25}>25</option>
+                <option value={30}>30</option>
               </select>
             </div>
             <div className="flex items-center space-x-2">

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { MAX_CHARACTER_INPUT_LENGTH } from "@/constants/constants";
+import { model } from "@/constants/gemini";
 
 export async function POST(request: NextRequest) {
   try {
@@ -71,16 +72,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Limit content length for API efficiency
-    const maxLength = 6000;
     const truncatedContent =
-      content.length > maxLength
-        ? content.substring(0, maxLength) + "..."
+      content.length > MAX_CHARACTER_INPUT_LENGTH
+        ? content.substring(0, MAX_CHARACTER_INPUT_LENGTH) + "..."
         : content;
 
     try {
-      const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
       const prompt = `
         Create ${questionCount} quiz questions based on the following content. 
         Mix question types: multiple choice, fill-in-the-blank, and true/false.
@@ -106,6 +103,8 @@ export async function POST(request: NextRequest) {
 
         Content:
         ${truncatedContent}
+
+        NOTE: Do not forget to insert the type ("multiple-choice" | "fill-in-blank" | "true-false") per question
       `;
 
       const result = await model.generateContent(prompt);

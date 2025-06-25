@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
-
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY || "");
+import { model } from "@/constants/gemini";
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,7 +35,6 @@ export async function POST(request: NextRequest) {
 
     if (type === "image") {
       // Use Gemini Vision for image OCR
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
       const imageBuffer = await file.arrayBuffer();
       const imageBase64 = Buffer.from(imageBuffer).toString("base64");
@@ -59,7 +56,6 @@ export async function POST(request: NextRequest) {
       extractedText = result.response.text();
     } else if (type === "pdf") {
       // Use Gemini for PDF processing (treating as image for now)
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
       const pdfBuffer = await file.arrayBuffer();
       const pdfBase64 = Buffer.from(pdfBuffer).toString("base64");
@@ -90,8 +86,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate chapters using Gemini
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // Generate chapters using Gemin
     const chapterPrompt = `
       Analyze the following text and create a logical chapter structure. 
       Return a JSON array of chapters with descriptive titles and approximate start positions (character indices).
