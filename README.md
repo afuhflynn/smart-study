@@ -19,34 +19,38 @@ Transform your reading experience with AI-powered summaries, interactive quizzes
 - **State Management**: Zustand
 - **AI Services**: Google Gemini (Vision & Text)
 - **Text-to-Speech**: ElevenLabs
-- **Vector Database**: Pinecone
-- **Database**: MongoDB Atlas
-- **File Storage**: AWS S3
-- **Authentication**: NextAuth.js
-- **Deployment**: Vercel
+- **Database**: Neon Postgresql
+<!-- - **File Storage**: AWS S3 -->
+- **Authentication**: BetterAuth
+- **Deployment**: Vercel or Netlify
 
 ## 🏃‍♂️ Quick Start
 
 1. **Clone the repository**
+
    ```bash
-   git clone https://github.com/your-username/SmartStudy.git
-   cd SmartStudy
+   git clone https://github.com/afuhflynn/smart-study.git
+   cd smart-study
    ```
 
 2. **Install dependencies**
+
    ```bash
-   npm install
+   pnpm install or npm install
    ```
 
 3. **Set up environment variables**
+
    ```bash
    cp .env.example .env.local
    ```
+
    Fill in your API keys and configuration values.
 
 4. **Run the development server**
+
    ```bash
-   npm run dev
+   npm run dev or pnpm dev
    ```
 
 5. **Open your browser**
@@ -66,23 +70,18 @@ Transform your reading experience with AI-powered summaries, interactive quizzes
    - Get your API key from the profile section
    - Add to `ELEVENLABS_API_KEY`
 
-3. **Pinecone Vector Database**
-   - Create account at [Pinecone](https://pinecone.io)
-   - Create an index named `SmartStudy-embeddings`
-   - Add API key and environment to env vars
-
-4. **MongoDB Atlas**
-   - Set up a cluster at [MongoDB Atlas](https://cloud.mongodb.com)
+3. **Noen Postgresql**
+   - Set up a project and database [Neon.Tech](https://console.neon.tech/)
    - Get connection string
-   - Add to `MONGODB_URI`
+   - Add to `DATABASE_URL`
 
-5. **AWS S3 (Optional)**
+<!-- 4. **AWS S3 (Optional)**
    - Create S3 bucket for file storage
-   - Add AWS credentials to env vars
+   - Add AWS credentials to env vars -->
 
 ## 📁 Project Structure
 
-```
+```txt
 SmartStudy/
 ├── app/                    # Next.js app directory
 │   ├── api/               # API routes
@@ -105,55 +104,47 @@ SmartStudy/
 ## 🎯 Core Features Implementation
 
 ### Document Processing
+
 - OCR using Google Gemini Vision API
 - PDF text extraction with pdfjs-dist
 - Automatic chapter detection and structuring
 
 ### AI Summarization
+
 - Context-aware summaries using Google Gemini
 - Key points, main ideas, and action items extraction
 - Confidence scoring and difficulty assessment
 
 ### Quiz Generation
+
 - Multiple choice, fill-in-blank, and true/false questions
 - Adaptive difficulty based on content complexity
 - Detailed explanations for each answer
 
 ### Text-to-Speech
+
 - Natural voice narration with ElevenLabs
 - Real-time text highlighting during playback
 - Adjustable speed and voice selection
 
 ### Smart Recommendations
+
 - Content-based filtering using embeddings
 - Reading history analysis
 - Personalized suggestions based on preferences
 
 ## 🚀 Deployment
 
-### Vercel (Recommended)
-
-1. **Connect your repository**
-   ```bash
-   vercel --prod
-   ```
-
-2. **Set environment variables**
-   Add all required environment variables in Vercel dashboard
-
-3. **Deploy**
-   ```bash
-   vercel deploy --prod
-   ```
-
 ### Manual Deployment
 
 1. **Build the application**
+
    ```bash
    npm run build
    ```
 
 2. **Start production server**
+
    ```bash
    npm start
    ```
@@ -161,11 +152,13 @@ SmartStudy/
 ## 🧪 Testing
 
 Run the test suite:
+
 ```bash
 npm test
 ```
 
 Run tests in watch mode:
+
 ```bash
 npm run test:watch
 ```
@@ -199,9 +192,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- 📧 Email: support@SmartStudy.com
+- 📧 Email: [afuhflynn](mailto:flyinnsafuh@gmail.com)
 - 💬 Discord: [Join our community](https://discord.gg/SmartStudy)
-- 📖 Documentation: [docs.SmartStudy.com](https://docs.SmartStudy.com)
+- 📖 Documentation: [Github Repo Docs](https://github.com/afuhflynn/smart-study.git)
 
 ---
 
