@@ -10,11 +10,11 @@ export default function DashboardPage() {
   const { data: session, isPending } = useSession();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!isPending && !session) {
-      router.push("/auth/signin");
-    }
-  }, [session, isPending, router]);
+  // useEffect(() => {
+  //   if (!isPending && !session) {
+  //     router.push("/auth/signin");
+  //   }
+  // }, [session, isPending, router]);
 
   if (isPending) {
     return (
@@ -24,9 +24,9 @@ export default function DashboardPage() {
     );
   }
 
-  if (!session) {
-    return null;
-  }
+  // if (!session) {
+  //   return null;
+  // }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">

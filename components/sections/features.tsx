@@ -1,218 +1,88 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Upload,
-  FileText,
-  Sparkles,
-  Brain,
-  Headphones,
-  Target,
-  Zap,
-  Shield,
-} from "lucide-react";
+import { CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
-import Link from "next/link";
+import { features } from "@/constants/constants";
 
-const features = [
-  {
-    icon: Upload,
-    title: "Smart Document Upload",
-    description:
-      "Upload PDFs, images, or text files. Our AI extracts and processes content with OCR technology.",
-    badge: "OCR Powered",
-    gradient: "from-blue-500 to-cyan-500",
-  },
-  {
-    icon: FileText,
-    title: "Intelligent Chunking",
-    description:
-      "Content is automatically organized into logical sections for better comprehension.",
-    badge: "AI Organized",
-    gradient: "from-green-500 to-emerald-500",
-  },
-  {
-    icon: Sparkles,
-    title: "AI Summaries",
-    description:
-      "Get comprehensive summaries with key points, insights, and takeaways.",
-    badge: "Gemini AI",
-    gradient: "from-purple-500 to-violet-500",
-  },
-  {
-    icon: Brain,
-    title: "Quiz Generation",
-    description:
-      "Automatically generate MCQs and fill-in-the-blank questions to test understanding.",
-    badge: "Adaptive",
-    gradient: "from-pink-500 to-rose-500",
-  },
-  {
-    icon: Headphones,
-    title: "Premium Audio",
-    description:
-      "Natural text-to-speech with real-time highlighting and playback controls.",
-    badge: "ElevenLabs",
-    gradient: "from-orange-500 to-amber-500",
-  },
-  {
-    icon: Target,
-    title: "Smart Recommendations",
-    description:
-      "Personalized reading suggestions based on your interests and reading history.",
-    badge: "ML Powered",
-    gradient: "from-indigo-500 to-blue-500",
-  },
-  {
-    icon: Zap,
-    title: "Lightning Fast",
-    description:
-      "Optimized processing pipeline delivers results in seconds, not minutes.",
-    badge: "Optimized",
-    gradient: "from-yellow-500 to-orange-500",
-  },
-  {
-    icon: Shield,
-    title: "Privacy First",
-    description:
-      "Your documents are processed securely with enterprise-grade encryption.",
-    badge: "Secure",
-    gradient: "from-teal-500 to-green-500",
-  },
-];
+function FeatureCard({
+  icon,
+  title,
+  description,
+  features,
+  gradient,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  features: string[];
+  gradient: string;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      whileHover={{ y: -5 }}
+      transition={{ duration: 0.3 }}
+      className="paddingX"
+    >
+      <Card className="h-full card-hover card-glow">
+        <CardContent className="p-6">
+          <div
+            className={`inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r ${gradient} rounded-lg mb-4 text-white`}
+          >
+            {icon}
+          </div>
+          <h3 className="text-xl font-semibold mb-3">{title}</h3>
+          <p className="text-muted-foreground mb-4">{description}</p>
+          <ul className="space-y-2">
+            {features.map((feature, index) => (
+              <li key={index} className="flex items-center text-sm">
+                <CheckCircle className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
+                {feature}
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
 
 export function Features() {
   return (
-    <section className="py-20 relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute inset-0">
-        <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-purple-400/10 to-pink-400/10 rounded-full blur-xl animate-float"></div>
-        <div
-          className="absolute bottom-20 right-10 w-40 h-40 bg-gradient-to-br from-blue-400/10 to-indigo-400/10 rounded-full blur-xl animate-float"
-          style={{ animationDelay: "2s" }}
-        ></div>
-      </div>
-
-      <div className="container mx-auto px-4 relative z-10">
+    <section id="features" className="py-20">
+      <div className="container mx-auto px-4">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
           className="text-center mb-16"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
         >
-          <motion.h2
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            viewport={{ once: true }}
-            className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6"
-          >
-            Powerful Features
-            <br />
-            <span className="text-gray-900 dark:text-white">
-              for Modern Readers
-            </span>
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            viewport={{ once: true }}
-            className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed"
-          >
-            Experience the future of reading with our comprehensive suite of
-            AI-powered tools designed to enhance learning and comprehension.
-          </motion.p>
+          <Badge variant="outline" className="mb-4">
+            Features
+          </Badge>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            Everything you need to excel
+          </h2>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            Powerful AI tools designed to transform how you study and learn
+          </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {features.map((feature, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              viewport={{ once: true }}
-              className="group"
-            >
-              <Card className="h-full glass border-white/20 hover-glow transition-all duration-300 relative overflow-hidden">
-                {/* Animated background gradient */}
-                <div
-                  className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}
-                ></div>
-
-                <CardHeader className="pb-3 relative z-10">
-                  <div className="flex items-center justify-between mb-4">
-                    <div
-                      className={`p-3 rounded-xl bg-gradient-to-br ${feature.gradient} shadow-lg`}
-                    >
-                      <feature.icon className="h-6 w-6 text-white" />
-                    </div>
-                    <Badge
-                      variant="secondary"
-                      className="text-xs bg-white/10 backdrop-blur-sm border-white/20 animate-shimmer"
-                    >
-                      {feature.badge}
-                    </Badge>
-                  </div>
-                  <CardTitle className="text-lg group-hover:text-gradient transition-all duration-300">
-                    {feature.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="relative z-10">
-                  <CardDescription className="text-sm leading-relaxed group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors duration-300">
-                    {feature.description}
-                  </CardDescription>
-                </CardContent>
-              </Card>
-            </motion.div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {features.map((feature) => (
+            <FeatureCard
+              icon={<feature.icon className="h-8 w-8" />}
+              title={feature.title}
+              description={feature.description}
+              features={feature.features}
+              gradient={feature.gradient}
+            />
           ))}
         </div>
-
-        {/* Call to action */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.5 }}
-          viewport={{ once: true }}
-          className="text-center mt-16"
-        >
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="inline-block"
-          >
-            <div className="glass rounded-2xl p-8 border border-white/20 max-w-2xl mx-auto">
-              <h3 className="text-2xl font-bold mb-4 text-gradient">
-                Ready to Transform Your Reading?
-              </h3>
-              <p className="text-muted-foreground mb-6">
-                Join thousands of readers who have already enhanced their
-                learning experience with SmartStudy.
-              </p>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Button
-                  asChild
-                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover-glow transition-all duration-300"
-                >
-                  <Link href="/auth/signin">Get Started Free</Link>
-                </Button>
-              </motion.div>
-            </div>
-          </motion.div>
-        </motion.div>
       </div>
     </section>
   );
