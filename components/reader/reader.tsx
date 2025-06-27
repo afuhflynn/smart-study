@@ -45,7 +45,7 @@ export function Reader({ documentId, document: propDocument }: ReaderProps) {
       const updateProgress = async () => {
         try {
           const chapterProgress =
-            ((currentChapter + 1) / document.chapters.length) * 100;
+            ((currentChapter + 1) / document?.chapters?.length) * 100;
           await fetch(`/api/documents/${documentId}`, {
             method: "PUT",
             headers: {
@@ -80,30 +80,30 @@ export function Reader({ documentId, document: propDocument }: ReaderProps) {
     setHighlightedWordIndex(wordIndex);
   };
 
-  if (!document) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <p className="text-gray-600 dark:text-gray-300">
-          Document not available
-        </p>
-      </div>
-    );
-  }
+  // if (!document) {
+  //   return (
+  //     <div className="h-screen flex items-center justify-center">
+  //       <p className="text-gray-600 dark:text-gray-300">
+  //         Document not available
+  //       </p>
+  //     </div>
+  //   );
+  // }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+    <div className="h-screen flex flex-col ">
       {/* Top Navigation */}
       <motion.div
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm"
+        className="flex items-center justify-between p-4 border-b   shadow-sm"
       >
         <div className="flex items-center space-x-4">
           <Link href="/dashboard">
             <Button
               variant="ghost"
               size="sm"
-              className="hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
@@ -112,18 +112,18 @@ export function Reader({ documentId, document: propDocument }: ReaderProps) {
 
           <div className="hidden md:block">
             <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {document.title}
+              {document?.title}
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Chapter {currentChapter + 1} of {document.chapters.length} •{" "}
-              {document.estimatedReadTime} min read
+              Chapter {currentChapter + 1} of {document?.chapters?.length} •{" "}
+              {document?.estimatedReadTime} min read
             </p>
           </div>
         </div>
 
         <div className="flex items-center space-x-2">
           {/* View Mode Selector */}
-          <div className="hidden md:flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+          <div className="hidden md:flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
             {viewModeButtons.map(({ mode, icon: Icon, label }) => (
               <motion.div
                 key={mode}
@@ -136,7 +136,7 @@ export function Reader({ documentId, document: propDocument }: ReaderProps) {
                   onClick={() => setViewMode(mode)}
                   className={
                     viewMode === mode
-                      ? "bg-white dark:text-white text-black dark:bg-gray-800 shadow-sm"
+                      ? "bg-background/50 dark:text-white text-black  shadow-sm"
                       : ""
                   }
                 >
@@ -210,7 +210,7 @@ export function Reader({ documentId, document: propDocument }: ReaderProps) {
           transition={{ delay: 0.5 }}
           className="md:hidden fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50"
         >
-          <div className="flex bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 p-1">
+          <div className="flex  rounded-full shadow-lg border  p-1">
             {viewModeButtons.map(({ mode, icon: Icon, label }) => (
               <motion.div
                 key={mode}

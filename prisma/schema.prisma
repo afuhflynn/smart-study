@@ -73,6 +73,8 @@ model User {
   readingSessions ReadingSession[]
   achievements    Achievement[]
   DataExport      DataExport?
+  Summary         Summary[]
+  Quiz            Quiz[]
 }
 
 model Session {
@@ -136,6 +138,53 @@ model Document {
   readingSessions   ReadingSession[]
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
+  Summary           Summary?
+  Quiz              Quiz?
+}
+
+model Summary {
+  id          String   @id @default(cuid())
+  title       String
+  keyPoints   Json[]
+  mainIdeas   Json[]
+  actionItems Json[]
+  difficulty  String
+  readingTime String
+  confidence  Int
+  userId      String
+  documentId  String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum QuizType {
+  MULTIPLE_CHOICE
+  FILL_IN_BLANK
+  TRUE_FALSE
+}
+
+enum QuestionDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+model Quiz {
+  id            String   @id @default(cuid())
+  title         String
+  questions     Json[] // [{id: unique_id, question: string, options: [1, 2, 3, 4 or true / false], correctAnswer, explanation, difficulty: QuestionDifficulty, type: QuizType}]
+  userId        String
+  documentId    String   @unique
+  questionCount Int
+  totalAttempts Int?     @default(0)
+  bestScore     Int?     @default(0)
+  lasScore      Int?     @default(0)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document      Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model QuizResult {

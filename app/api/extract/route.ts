@@ -3,6 +3,10 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 import { model } from "@/constants/gemini";
+import {
+  MAX_CHARACTER_INPUT_LENGTH,
+  MAX_FILE_SIZE,
+} from "@/constants/constants";
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,8 +26,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
+    // Check if there is a document already exists for this user with that name
+
+    const documentExists = await prisma.document.findFirst({
+      where: {
+        userId: session.user.id,
+        title: file.name.replace(/\.[^/.]+$/, ""),
+      },
+    });
+
+    if (documentExists) {
+      return NextResponse.json(
+        { error: "Document with this name already exists. Try another one." },
+        { status: 409 }
+      );
+    }
     // Add file size limit check
-    const maxSize = 50 * 1024 * 1024; // 50MB
+    const maxSize = MAX_FILE_SIZE; // 50MB
     if (file.size > maxSize) {
       return NextResponse.json(
         { error: "File size too large. Maximum size is 50MB." },
@@ -86,7 +105,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate chapters using Gemin
+    // Generate chapters using Gemini
     const chapterPrompt = `
       Analyze the following text and create a logical chapter structure. 
       Return a JSON array of chapters with descriptive titles and approximate start positions (character indices).
@@ -95,8 +114,8 @@ export async function POST(request: NextRequest) {
       Format: [{"id": "1", "title": "Chapter Title", "startIndex": 0}]
       
       Text to analyze:
-      ${extractedText.substring(0, 4000)}${
-      extractedText.length > 4000 ? "..." : ""
+      ${extractedText.substring(0, MAX_CHARACTER_INPUT_LENGTH)}${
+      extractedText.length > MAX_CHARACTER_INPUT_LENGTH ? "..." : ""
     }
     `;
 
@@ -158,6 +177,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       documentId: document.id,
+      title: document.title,
       content: extractedText,
       chapters,
       metadata: {

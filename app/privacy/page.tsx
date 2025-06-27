@@ -29,7 +29,7 @@ export default function PrivacyPage() {
 
           {/* Content */}
           <div className="prose prose-lg max-w-none dark:prose-invert">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8">
+            <div className=" rounded-xl shadow-sm border  p-8 mb-8">
               <div className="flex items-center mb-4">
                 <Eye className="h-6 w-6 text-blue-600 mr-3" />
                 <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
@@ -68,7 +68,7 @@ export default function PrivacyPage() {
               </ul>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8">
+            <div className=" rounded-xl shadow-sm border  p-8 mb-8">
               <div className="flex items-center mb-4">
                 <Database className="h-6 w-6 text-green-600 mr-3" />
                 <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
@@ -105,7 +105,7 @@ export default function PrivacyPage() {
               </ul>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8">
+            <div className=" rounded-xl shadow-sm border  p-8 mb-8">
               <div className="flex items-center mb-4">
                 <Globe className="h-6 w-6 text-purple-600 mr-3" />
                 <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
@@ -153,7 +153,7 @@ export default function PrivacyPage() {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8">
+            <div className=" rounded-xl shadow-sm border  p-8 mb-8">
               <div className="flex items-center mb-4">
                 <Lock className="h-6 w-6 text-red-600 mr-3" />
                 <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
@@ -201,7 +201,7 @@ export default function PrivacyPage() {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8">
+            <div className=" rounded-xl shadow-sm border  p-8 mb-8">
               <div className="flex items-center mb-4">
                 <UserCheck className="h-6 w-6 text-indigo-600 mr-3" />
                 <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
@@ -255,7 +255,7 @@ export default function PrivacyPage() {
               </p>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8">
+            <div className=" rounded-xl shadow-sm border  p-8 mb-8">
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
                 Data Retention
               </h2>
@@ -285,7 +285,7 @@ export default function PrivacyPage() {
               </ul>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8">
+            <div className=" rounded-xl shadow-sm border  p-8 mb-8">
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
                 Cookies and Tracking
               </h2>
@@ -307,7 +307,7 @@ export default function PrivacyPage() {
               </p>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8">
+            <div className=" rounded-xl shadow-sm border  p-8 mb-8">
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
                 Children&apos;s Privacy
               </h2>
@@ -321,7 +321,7 @@ export default function PrivacyPage() {
               </p>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8">
+            <div className=" rounded-xl shadow-sm border  p-8 mb-8">
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
                 International Data Transfers
               </h2>
@@ -334,7 +334,7 @@ export default function PrivacyPage() {
               </p>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8">
+            <div className=" rounded-xl shadow-sm border  p-8 mb-8">
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
                 Changes to This Policy
               </h2>

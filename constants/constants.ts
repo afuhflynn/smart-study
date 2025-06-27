@@ -1,7 +1,10 @@
 import {
   Brain,
+  Clock,
   FileQuestion,
+  FileText,
   Github,
+  Home,
   Linkedin,
   Mail,
   Shield,
@@ -13,6 +16,7 @@ import {
 } from "lucide-react";
 
 export const MAX_CHARACTER_INPUT_LENGTH = 10000;
+export const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
 export const steps = [
   {
@@ -144,5 +148,29 @@ export const socialLinks = [
     href: "mailto:flyinnsafuh@gmail.com",
     icon: Mail,
     color: "hover:text-purple-600",
+  },
+];
+
+export const dashboardNavigationItems = [
+  {
+    title: "Dashboard",
+    href: "/dashboard",
+    icon: Home,
+    description: "Overview and quick actions",
+    badge: null,
+  },
+  {
+    title: "Summaries",
+    href: "/dashboard/summaries",
+    icon: FileText,
+    description: "View AI-generated summaries",
+    badge: null,
+  },
+  {
+    title: "Quizzes",
+    href: "/dashboard/quizzes",
+    icon: FileQuestion,
+    description: "Practice with generated quizzes",
+    badge: null,
   },
 ];

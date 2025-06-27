@@ -37,7 +37,7 @@ export function DocumentViewer({
   highlightedWordIndex = -1,
 }: DocumentViewerProps) {
   const [fontSize, setFontSize] = useState(16);
-  const [readingProgress, setReadingProgress] = useState(document.progress);
+  const [readingProgress, setReadingProgress] = useState(document?.progress);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [readingSessionActive, setReadingSessionActive] = useState(false);
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
@@ -48,24 +48,24 @@ export function DocumentViewer({
   console.log(sessionStartTime);
   const getCurrentChapterContent = useCallback(() => {
     return () => {
-      const chapter = document.chapters[currentChapter];
-      const nextChapter = document.chapters[currentChapter + 1];
+      const chapter = document?.chapters[currentChapter];
+      const nextChapter = document?.chapters[currentChapter + 1];
 
       const startIndex = chapter.startIndex;
       const endIndex = nextChapter
         ? nextChapter.startIndex
-        : document.content.length;
+        : document?.content?.length;
 
-      return document.content.slice(startIndex, endIndex);
+      return document?.content?.slice(startIndex, endIndex);
     };
-  }, [currentChapter, document.chapters, document.content]);
+  }, [currentChapter, document?.chapters, document?.content]);
 
   const trackReadingProgress = useCallback(
     async (progress: number) => {
       if (!session?.user) return;
 
       try {
-        const chapter = document.chapters[currentChapter];
+        const chapter = document?.chapters[currentChapter];
         const chapterContent = getCurrentChapterContent();
         const wordsInChapter = chapterContent.toString().split(/\s+/).length;
         const wordsRead = Math.floor((progress / 100) * wordsInChapter);
@@ -74,8 +74,8 @@ export function DocumentViewer({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            documentId: document.id,
-            chapterId: chapter.id,
+            documentId: document?.id,
+            chapterId: chapter?.id,
             action: "update",
             progress: progress,
             wordsRead: wordsRead,
@@ -86,8 +86,8 @@ export function DocumentViewer({
       }
     },
     [
-      document.id,
-      document.chapters,
+      document?.id,
+      document?.chapters,
       currentChapter,
       session,
       getCurrentChapterContent,
@@ -109,13 +109,13 @@ export function DocumentViewer({
     if (!session?.user) return;
 
     try {
-      const chapter = document.chapters[currentChapter];
+      const chapter = document?.chapters[currentChapter];
       await fetch("/api/track-reading", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          documentId: document.id,
-          chapterId: chapter.id,
+          documentId: document?.id,
+          chapterId: chapter?.id,
           action: "start",
           progress: readingProgress,
         }),
@@ -128,8 +128,8 @@ export function DocumentViewer({
     }
   }, [
     currentChapter,
-    document.chapters,
-    document.id,
+    document?.chapters,
+    document?.id,
     readingProgress,
     session?.user,
   ]);
@@ -138,13 +138,13 @@ export function DocumentViewer({
     if (!session?.user || !readingSessionActive) return;
 
     try {
-      const chapter = document.chapters[currentChapter];
+      const chapter = document?.chapters[currentChapter];
       await fetch("/api/track-reading", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          documentId: document.id,
-          chapterId: chapter.id,
+          documentId: document?.id,
+          chapterId: chapter?.id,
           action: "end",
           progress: readingProgress,
           wordsRead: wordsReadInSession,
@@ -159,8 +159,8 @@ export function DocumentViewer({
     }
   }, [
     currentChapter,
-    document.chapters,
-    document.id,
+    document?.chapters,
+    document?.id,
     readingProgress,
     readingSessionActive,
     session?.user,
@@ -283,33 +283,27 @@ export function DocumentViewer({
   ]);
 
   return (
-    <div className="h-full flex bg-gray-50 dark:bg-gray-900">
+    <div className="h-full flex ">
       {/* Chapter Navigation Sidebar */}
       <motion.div
         initial={{ x: -300, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
-        className="hidden lg:block w-64 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm"
+        className="hidden lg:block w-64 border-r  shadow-sm"
       >
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="p-4 border-b ">
           <h3 className="font-semibold text-gray-900 dark:text-white">
             Chapters
           </h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            {document.chapters.length} chapters • {document.estimatedReadTime}{" "}
-            min read
-          </p>
         </div>
         <div className="overflow-y-auto h-full pb-20">
-          {document.chapters.map((chapter, index) => (
+          {document?.chapters?.map((chapter, index) => (
             <motion.button
               key={chapter.id}
               onClick={() => onChapterChange(index)}
               whileHover={{ x: 4 }}
               whileTap={{ scale: 0.98 }}
               className={`w-full text-left p-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 ${
-                currentChapter === index
-                  ? "bg-purple-50 dark:bg-purple-900/20 border-r-2 border-purple-600"
-                  : ""
+                currentChapter === index ? " border-r-2 border-purple-600" : ""
               }`}
             >
               <div className="flex items-center justify-between">
@@ -320,7 +314,7 @@ export function DocumentViewer({
                       : "text-gray-700 dark:text-gray-300"
                   }`}
                 >
-                  {chapter.title}
+                  {chapter?.title}
                 </span>
                 <span className="text-xs text-gray-500 dark:text-gray-400">
                   {index + 1}
@@ -344,7 +338,7 @@ export function DocumentViewer({
         <motion.div
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm"
+          className="flex items-center justify-between p-4 border-b   shadow-sm"
         >
           <div className="flex items-center space-x-2">
             <Button
@@ -362,7 +356,7 @@ export function DocumentViewer({
               variant="ghost"
               size="sm"
               onClick={() => navigateChapter("next")}
-              disabled={currentChapter === document.chapters.length - 1}
+              disabled={currentChapter === document?.chapters?.length - 1}
               className="hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               Next
@@ -389,7 +383,7 @@ export function DocumentViewer({
                 variant="ghost"
                 size="sm"
                 onClick={() => setFontSize(Math.max(12, fontSize - 2))}
-                className="hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="hover:bg-gray-100 dark:hover:bg-gray-800"
               >
                 <Type className="h-3 w-3" />
               </Button>
@@ -400,7 +394,7 @@ export function DocumentViewer({
                 variant="ghost"
                 size="sm"
                 onClick={() => setFontSize(Math.min(24, fontSize + 2))}
-                className="hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="hover:bg-gray-100 dark:hover:bg-gray-800"
               >
                 <Type className="h-5 w-5" />
               </Button>
@@ -408,20 +402,11 @@ export function DocumentViewer({
           </div>
         </motion.div>
 
-        {/* Progress Bar */}
-        <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-          <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-300 mb-1">
-            <span>Reading Progress</span>
-            <span>{Math.round(readingProgress)}%</span>
-          </div>
-          <Progress value={readingProgress} className="h-2" />
-        </div>
-
         {/* Content Area */}
         <div
           ref={contentRef}
           onScroll={handleScroll}
-          className="flex-1 overflow-y-auto bg-white dark:bg-gray-900 scroll-smooth"
+          className="flex-1 overflow-y-auto scroll-smooth"
         >
           <motion.div
             key={currentChapter}
@@ -441,7 +426,7 @@ export function DocumentViewer({
             />
 
             {/* Chapter Navigation at Bottom */}
-            <div className="flex justify-between items-center mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex justify-between items-center mt-12 pt-8 border-t ">
               <Button
                 variant="outline"
                 onClick={() => navigateChapter("prev")}
@@ -453,13 +438,13 @@ export function DocumentViewer({
               </Button>
 
               <span className="text-sm text-gray-500 dark:text-gray-400">
-                Chapter {currentChapter + 1} of {document.chapters.length}
+                Chapter {currentChapter + 1} of {document?.chapters?.length}
               </span>
 
               <Button
                 variant="outline"
                 onClick={() => navigateChapter("next")}
-                disabled={currentChapter === document.chapters.length - 1}
+                disabled={currentChapter === document?.chapters?.length - 1}
                 className="hover:bg-gray-50 dark:hover:bg-gray-800"
               >
                 Next Chapter

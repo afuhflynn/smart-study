@@ -75,7 +75,9 @@ export function Features() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature) => (
             <FeatureCard
-              icon={<feature.icon className="h-8 w-8" />}
+              icon={
+                <feature.icon className="h-8 w-8 text-black dark:text-white" />
+              }
               title={feature.title}
               description={feature.description}
               features={feature.features}

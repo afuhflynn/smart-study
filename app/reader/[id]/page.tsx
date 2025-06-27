@@ -20,15 +20,15 @@ export default function ReaderPage() {
 
         if (!response.ok) {
           if (response.status === 404) {
-            throw new Error("Document not found");
+            console.log("Document not found");
           }
-          throw new Error("Failed to load document");
+          console.log("Failed to load document");
         }
 
         const data = await response.json();
         setDocument(data.document);
       } catch (error) {
-        console.error("Failed to fetch document:", error);
+        console.log("Failed to fetch document:", error);
         setError(
           error instanceof Error ? error.message : "Failed to load document"
         );
@@ -45,7 +45,7 @@ export default function ReaderPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen ">
         <main className="flex items-center justify-center h-screen">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
@@ -58,32 +58,32 @@ export default function ReaderPage() {
     );
   }
 
-  if (error || !document) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <main className="flex items-center justify-center h-screen">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-              {error || "Document not found"}
-            </h1>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
-              The document you&apos;re looking for doesn&apos;t exist or you
-              don&apos;t have access to it.
-            </p>
-            <a
-              href="/dashboard"
-              className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-            >
-              ← Back to Dashboard
-            </a>
-          </div>
-        </main>
-      </div>
-    );
-  }
+  // if (error || !document) {
+  //   return (
+  //     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+  //       <main className="flex items-center justify-center h-screen">
+  //         <div className="text-center">
+  //           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+  //             {error || "Document not found"}
+  //           </h1>
+  //           <p className="text-gray-600 dark:text-gray-300 mb-4">
+  //             The document you&apos;re looking for doesn&apos;t exist or you
+  //             don&apos;t have access to it.
+  //           </p>
+  //           <a
+  //             href="/dashboard"
+  //             className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+  //           >
+  //             ← Back to Dashboard
+  //           </a>
+  //         </div>
+  //       </main>
+  //     </div>
+  //   );
+  // }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen">
       <main>
         <Reader documentId={documentId} document={document} />
       </main>

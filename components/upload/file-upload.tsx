@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { MAX_FILE_SIZE } from "@/constants/constants";
 
 interface FileUploadProps {
   onClose: () => void;
@@ -25,13 +26,63 @@ interface FileUploadProps {
 interface UploadedFile {
   file: File;
   progress: number;
-  status: "uploading" | "processing" | "completed" | "error";
+  status: "uploading" | "processing" | "summarizing" | "completed" | "error";
   id: string;
   documentId?: string;
 }
 
 export function FileUpload({ onClose, setIsUploadComplete }: FileUploadProps) {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+
+  // track uploaded documents to summarize them immediately
+  const [documentId, setDocumentId] = useState("");
+  const [documentContent, setDocumentContent] = useState("");
+  const [documentTitle, setDocumentTitle] = useState("");
+
+  const summarizeContent = useCallback(
+    async (
+      file: File,
+      updateProgress: (
+        progress: number,
+        status?: UploadedFile["status"]
+      ) => void
+    ) => {
+      if (!documentContent || !documentId) return;
+      try {
+        const formData = new FormData();
+        formData.append("title", documentTitle);
+        formData.append("documentId", documentId);
+        formData.append("content", documentContent);
+
+        const response = await fetch("/api/summarize", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to summarize file");
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+          updateProgress(100, "completed");
+          toast.success(`${file.name} summarized successfully!`);
+        } else {
+          throw new Error(result.error || "Summarization failed");
+        }
+      } catch (error) {
+        console.error("File summarization error:", error);
+        updateProgress(0, "error");
+        toast.error(
+          `Failed to summarize ${file.name}: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
+      }
+    },
+    []
+  );
 
   const processFile = useCallback(
     async (
@@ -69,6 +120,13 @@ export function FileUpload({ onClose, setIsUploadComplete }: FileUploadProps) {
         if (result.success) {
           updateProgress(100, "completed");
           toast.success(`${file.name} processed successfully!`);
+          setDocumentId(result.documentId);
+          setDocumentContent(result.content);
+          setDocumentTitle(result.title);
+
+          updateProgress(100, "processing");
+          //summarize file content
+          setTimeout(() => summarizeContent(file, updateProgress), 500);
 
           // Update the file with the actual document ID from the server
           setUploadedFiles((prev) =>
@@ -90,7 +148,7 @@ export function FileUpload({ onClose, setIsUploadComplete }: FileUploadProps) {
         );
       }
     },
-    [setIsUploadComplete]
+    [setIsUploadComplete, summarizeContent]
   );
 
   const simulateUpload = useCallback(
@@ -161,7 +219,7 @@ export function FileUpload({ onClose, setIsUploadComplete }: FileUploadProps) {
       "image/*": [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"],
     },
     maxFiles: 5,
-    maxSize: 50 * 1024 * 1024, // 50MB
+    maxSize: MAX_FILE_SIZE, // 50MB
     onDropRejected: (fileRejections) => {
       fileRejections.forEach((file) => {
         const errors = file.errors.map((e) => e.message).join(", ");
@@ -216,6 +274,8 @@ export function FileUpload({ onClose, setIsUploadComplete }: FileUploadProps) {
       case "uploading":
         return <Upload className="h-4 w-4 animate-bounce" />;
       case "processing":
+        return <Sparkles className="h-4 w-4 animate-spin" />;
+      case "summarizing":
         return <Sparkles className="h-4 w-4 animate-spin" />;
       case "completed":
         return <CheckCircle className="h-4 w-4" />;
@@ -329,7 +389,7 @@ export function FileUpload({ onClose, setIsUploadComplete }: FileUploadProps) {
                 transition={{ duration: 0.3, delay: index * 0.1 }}
                 layout
               >
-                <Card className="border border-gray-200 dark:border-gray-700 hover-glow transition-all duration-300">
+                <Card className="border  hover-glow transition-all duration-300">
                   <CardContent className="p-4">
                     <div className="flex items-center space-x-3">
                       <motion.div
@@ -447,7 +507,7 @@ export function FileUpload({ onClose, setIsUploadComplete }: FileUploadProps) {
               }
               onClose();
             }}
-            className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white disabled:opacity-50"
+            className="bg-primary text-white disabled:opacity-50"
           >
             <CheckCircle className="mr-2 h-4 w-4" />
             Continue Reading (

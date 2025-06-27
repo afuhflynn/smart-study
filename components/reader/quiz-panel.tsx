@@ -217,7 +217,7 @@ export function QuizPanel({ document }: QuizPanelProps) {
   if (isGenerating) {
     return (
       <div className="h-full flex flex-col bg-white dark:bg-gray-900">
-        <div className="border-b border-gray-200 dark:border-gray-700 p-6">
+        <div className="border-b  p-6">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/50 dark:to-blue-900/50 rounded-lg">
               <MessageSquare className="h-5 w-5 text-purple-600 dark:text-purple-400" />
@@ -252,7 +252,7 @@ export function QuizPanel({ document }: QuizPanelProps) {
   if (error && questions.length === 0) {
     return (
       <div className="h-full flex flex-col bg-white dark:bg-gray-900">
-        <div className="border-b border-gray-200 dark:border-gray-700 p-6">
+        <div className="border-b  p-6">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/50 dark:to-blue-900/50 rounded-lg">
               <MessageSquare className="h-5 w-5 text-purple-600 dark:text-purple-400" />
@@ -290,7 +290,7 @@ export function QuizPanel({ document }: QuizPanelProps) {
   if (showResults) {
     return (
       <div className="h-full flex flex-col bg-white dark:bg-gray-900">
-        <div className="border-b border-gray-200 dark:border-gray-700 p-6">
+        <div className="border-b  p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-gradient-to-r from-green-100 to-blue-100 dark:from-green-900/50 dark:to-blue-900/50 rounded-lg">
@@ -409,7 +409,7 @@ export function QuizPanel({ document }: QuizPanelProps) {
   if (questions.length === 0) {
     return (
       <div className="h-full flex flex-col bg-white dark:bg-gray-900">
-        <div className="border-b border-gray-200 dark:border-gray-700 p-6">
+        <div className="border-b  p-6">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/50 dark:to-blue-900/50 rounded-lg">
               <MessageSquare className="h-5 w-5 text-purple-600 dark:text-purple-400" />
@@ -453,7 +453,7 @@ export function QuizPanel({ document }: QuizPanelProps) {
   return (
     <div className="h-full flex flex-col bg-white dark:bg-gray-900">
       {/* Header */}
-      <div className="border-b border-gray-200 dark:border-gray-700 p-6">
+      <div className="border-b  p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/50 dark:to-blue-900/50 rounded-lg">
@@ -623,7 +623,7 @@ export function QuizPanel({ document }: QuizPanelProps) {
       </div>
 
       {/* Navigation */}
-      <div className="border-t border-gray-200 dark:border-gray-700 p-6">
+      <div className="border-t  p-6">
         <div className="flex items-center justify-between">
           <Button
             variant="outline"

@@ -152,7 +152,7 @@ export function RecentDocuments({
             {[...Array(3)].map((_, index) => (
               <div
                 key={index}
-                className="flex items-start space-x-4 p-4 rounded-lg border border-gray-200 dark:border-gray-700"
+                className="flex items-start space-x-4 p-4 rounded-lg border "
               >
                 <Skeleton className="h-10 w-10 rounded-lg" />
                 <div className="flex-1 space-y-2">
@@ -180,7 +180,7 @@ export function RecentDocuments({
         <CardContent>
           <div className="text-center py-8">
             <p className="text-gray-500 dark:text-gray-400 mb-4">{error}</p>
-            <Button onClick={fetchDocuments} variant="outline">
+            <Button onClick={() => refetch()} variant="outline">
               Try Again
             </Button>
           </div>
@@ -234,7 +234,7 @@ export function RecentDocuments({
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="flex items-start space-x-4 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
+              className="flex items-start space-x-4 p-4 rounded-lg border  hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
             >
               <div className="flex-shrink-0">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/50 dark:to-blue-900/50">

@@ -35,7 +35,7 @@ export default function TermsPage() {
 
           {/* Content */}
           <div className="prose prose-lg max-w-none dark:prose-invert">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8">
+            <div className=" rounded-xl shadow-sm border  p-8 mb-8">
               <div className="flex items-center mb-4">
                 <FileText className="h-6 w-6 text-blue-600 mr-3" />
                 <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
@@ -66,7 +66,7 @@ export default function TermsPage() {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8">
+            <div className=" rounded-xl shadow-sm border  p-8 mb-8">
               <div className="flex items-center mb-4">
                 <Users className="h-6 w-6 text-green-600 mr-3" />
                 <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
@@ -105,7 +105,7 @@ export default function TermsPage() {
               </p>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8">
+            <div className=" rounded-xl shadow-sm border  p-8 mb-8">
               <div className="flex items-center mb-4">
                 <Shield className="h-6 w-6 text-purple-600 mr-3" />
                 <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
@@ -149,7 +149,7 @@ export default function TermsPage() {
               </ul>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8">
+            <div className=" rounded-xl shadow-sm border  p-8 mb-8">
               <div className="flex items-center mb-4">
                 <FileText className="h-6 w-6 text-indigo-600 mr-3" />
                 <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
@@ -200,7 +200,7 @@ export default function TermsPage() {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8">
+            <div className=" rounded-xl shadow-sm border  p-8 mb-8">
               <div className="flex items-center mb-4">
                 <CreditCard className="h-6 w-6 text-green-600 mr-3" />
                 <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
@@ -255,7 +255,7 @@ export default function TermsPage() {
               </ul>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8">
+            <div className=" rounded-xl shadow-sm border  p-8 mb-8">
               <div className="flex items-center mb-4">
                 <AlertTriangle className="h-6 w-6 text-yellow-600 mr-3" />
                 <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
@@ -296,7 +296,7 @@ export default function TermsPage() {
               </p>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8">
+            <div className=" rounded-xl shadow-sm border  p-8 mb-8">
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
                 Intellectual Property
               </h2>
@@ -333,7 +333,7 @@ export default function TermsPage() {
               </ul>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8">
+            <div className=" rounded-xl shadow-sm border  p-8 mb-8">
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
                 Privacy and Data Protection
               </h2>
@@ -360,7 +360,7 @@ export default function TermsPage() {
               </p>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8">
+            <div className=" rounded-xl shadow-sm border  p-8 mb-8">
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
                 Termination
               </h2>
@@ -394,7 +394,7 @@ export default function TermsPage() {
               </ul>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8">
+            <div className=" rounded-xl shadow-sm border  p-8 mb-8">
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
                 Governing Law
               </h2>
@@ -412,7 +412,7 @@ export default function TermsPage() {
               </p>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8">
+            <div className=" rounded-xl shadow-sm border  p-8 mb-8">
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
                 Changes to Terms
               </h2>
@@ -439,7 +439,7 @@ export default function TermsPage() {
                 contact us:
               </p>
 
-              <div className="mt-6 p-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-700">
+              <div className="mt-6 p-4  rounded-lg border border-purple-200 dark:border-purple-700">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   <strong>Last Updated:</strong> January 15, 2025
                   <br />

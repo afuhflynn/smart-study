@@ -1,10 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { MAX_CHARACTER_INPUT_LENGTH } from "@/constants/constants";
 import { model } from "@/constants/gemini";
+import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 export async function POST(request: NextRequest) {
   try {
-    const { content, chapterId, documentId } = await request.json();
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const { content, documentId, title } = await request.json();
 
     if (!content) {
       return NextResponse.json(
@@ -42,7 +52,6 @@ export async function POST(request: NextRequest) {
         confidence: 70,
         createdAt: new Date().toISOString(),
         documentId,
-        chapterId,
       };
 
       return NextResponse.json({
@@ -147,11 +156,25 @@ export async function POST(request: NextRequest) {
       summary.id = `summary-${Date.now()}`;
       summary.createdAt = new Date().toISOString();
       summary.documentId = documentId;
-      summary.chapterId = chapterId;
+
+      // Save summary
+      const newSummary = await prisma.summary.create({
+        data: {
+          title,
+          keyPoints: summary.keyPoints,
+          mainIdeas: summary.mainIdeas,
+          actionItems: summary.actionItems,
+          difficulty: summary.difficulty,
+          readingTime: summary.readingTime,
+          confidence: summary.confidence,
+          userId: session.user.id,
+          documentId,
+        },
+      });
 
       return NextResponse.json({
         success: true,
-        summary,
+        summary: newSummary,
       });
     } catch (geminiError) {
       console.error("Gemini API error:", geminiError);
@@ -181,7 +204,6 @@ export async function POST(request: NextRequest) {
         confidence: 70,
         createdAt: new Date().toISOString(),
         documentId,
-        chapterId,
       };
 
       return NextResponse.json({
@@ -195,6 +217,49 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: "Failed to generate summary",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 }
+    );
+  }
+}
+
+// Get all personal summaries
+export async function GET() {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const summaries = await prisma.summary.findMany({
+      where: {
+        userId: session.user.id,
+      },
+    });
+
+    if (!summaries) {
+      return NextResponse.json(
+        {
+          error: "Failed to fetch summaries.",
+          details: "An unexpected error occurred fetching summaries details.",
+        },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      summaries,
+    });
+  } catch (error) {
+    console.error("Summaries fetch failed:", error);
+    return NextResponse.json(
+      {
+        error: "Failed to fetch summaries",
         details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }

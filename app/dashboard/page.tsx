@@ -1,10 +1,8 @@
 "use client";
 
 import { Dashboard } from "@/components/dashboard/dashboard";
-import { Header } from "@/components/layout/header";
 import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 
 export default function DashboardPage() {
   const { data: session, isPending } = useSession();
@@ -29,11 +27,8 @@ export default function DashboardPage() {
   // }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Header />
-      <main>
-        <Dashboard />
-      </main>
-    </div>
+    <main className="paddingX h-screen overflow-auto">
+      <Dashboard />
+    </main>
   );
 }

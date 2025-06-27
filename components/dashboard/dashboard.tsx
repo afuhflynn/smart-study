@@ -40,7 +40,7 @@ export function Dashboard() {
 
   const { data: stats, isPending } = useQuery({
     queryKey: ["stats"],
-    staleTime: 5000,
+    staleTime: 30 * 60 * 1000,
     gcTime: 1000,
     queryFn: fetchStats,
   });
@@ -82,15 +82,6 @@ export function Dashboard() {
 
   return (
     <div className="container mx-auto px-4 py-8 relative">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 right-20 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-indigo-400/10 rounded-full blur-xl animate-float"></div>
-        <div
-          className="absolute bottom-20 left-20 w-40 h-40 bg-gradient-to-br from-violet-400/10 to-purple-400/10 rounded-full blur-xl animate-float"
-          style={{ animationDelay: "2s" }}
-        ></div>
-      </div>
-
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -104,7 +95,10 @@ export function Dashboard() {
           transition={{ duration: 0.6, delay: 0.2 }}
         >
           <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            Welcome back, {session?.user?.name?.split(" ")[0]}!
+            {session?.user.createdAt === new Date()
+              ? "Hey there, "
+              : "Welcome back, "}{" "}
+            {session?.user?.name?.split(" ")[0]}!
           </span>{" "}
           <motion.span
             animate={{ rotate: [0, 10, -10, 0] }}
@@ -120,7 +114,8 @@ export function Dashboard() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
         >
-          Continue your learning journey with AI-powered reading tools.
+          {session?.user.createdAt === new Date() ? "Start" : "Continue"}
+          your learning journey with AI-powered reading tools.
         </motion.p>
       </motion.div>
 
@@ -225,14 +220,14 @@ export function Dashboard() {
       {/* Upload Modal */}
       {showUpload && (
         <motion.div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-auto upload-container py-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={() => setShowUpload(false)}
         >
           <motion.div
-            className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl"
+            className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl mt-20"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}

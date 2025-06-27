@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, MouseEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
@@ -89,16 +89,16 @@ export function AudioPlayer({
   }, []);
 
   const getCurrentChapterContent = useCallback(() => {
-    const chapter = document.chapters[currentChapter];
-    const nextChapter = document.chapters[currentChapter + 1];
+    const chapter = document?.chapters[currentChapter];
+    const nextChapter = document?.chapters[currentChapter + 1];
 
     const startIndex = chapter.startIndex;
     const endIndex = nextChapter
       ? nextChapter.startIndex
-      : document.content.length;
+      : document?.content?.length;
 
-    return document.content.slice(startIndex, endIndex);
-  }, [currentChapter, document.chapters, document.content]);
+    return document?.content?.slice(startIndex, endIndex);
+  }, [currentChapter, document?.chapters, document?.content]);
 
   const generateAudioForChapter = useCallback(() => {
     return async () => {
@@ -129,7 +129,7 @@ export function AudioPlayer({
             text: cleanContent,
             voice: selectedVoice,
             speed: playbackSpeed,
-            chapterId: document.chapters[currentChapter].id,
+            chapterId: document?.chapters[currentChapter].id,
           }),
         });
 
@@ -383,7 +383,7 @@ export function AudioPlayer({
       setDuration(audioRef.current.duration || 0);
     }
   };
-  const canAdvanceToNext = currentChapter < document.chapters.length - 1;
+  const canAdvanceToNext = currentChapter < document?.chapters?.length - 1;
   const canGoToPrevious = currentChapter > 0;
   console.log(canGoToPrevious);
 
@@ -391,7 +391,7 @@ export function AudioPlayer({
     <motion.div
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg"
+      className="border-t  shadow-lg"
     >
       {/* Hidden audio element */}
       {audioData && (
@@ -447,7 +447,7 @@ export function AudioPlayer({
             onValueChange={handleSeek}
             max={duration || 100}
             step={1}
-            className="w-full"
+            className="w-full text-gray-800 bg-gray-800"
             disabled={!audioData || isGenerating}
           />
           <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -461,10 +461,10 @@ export function AudioPlayer({
           <div className="flex items-center space-x-3 min-w-0 flex-1">
             <div className="min-w-0">
               <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                {document.chapters[currentChapter]?.title || "Audio Narration"}
+                {document?.chapters[currentChapter]?.title || "Audio Narration"}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Chapter {currentChapter + 1} of {document.chapters.length}
+                Chapter {currentChapter + 1} of {document?.chapters?.length}
                 {audioData && ` • ${audioData.voice}`}
                 {autoAdvance && canAdvanceToNext && (
                   <span className="ml-2 text-blue-600 dark:text-blue-400">
@@ -553,7 +553,7 @@ export function AudioPlayer({
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute bottom-full right-0 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-4 min-w-[280px] z-50"
+                    className="absolute bottom-full right-0 mb-2 border  rounded-lg shadow-xl p-4 min-w-[280px] z-50 bg-background"
                   >
                     <div className="space-y-4">
                       {/* Auto-advance Setting */}
@@ -581,7 +581,7 @@ export function AudioPlayer({
                         <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
                           Voice
                         </label>
-                        <span className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-white">
+                        <span className="w-full border rounded-xl p-3 text-gray-900 dark:text-white">
                           {availableVoices[0].name}
                         </span>
                       </div>
