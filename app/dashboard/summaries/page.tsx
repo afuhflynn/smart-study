@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react"; // useEffect and isLoading state will be managed by TanStack Query
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -32,94 +32,178 @@ import {
   Eye,
 } from "lucide-react";
 
+// TanStack Query imports
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { toast } from "sonner"; // Assuming you have a toast component (e.g., from shadcn/ui)
+
+// Initialize QueryClient outside the component to prevent re-initialization
+const queryClient = new QueryClient();
+
+// --- Adjusted Summary Interface based on Prisma model ---
 interface Summary {
   id: string;
   title: string;
-  content: string;
-  date: string;
-  uploadId: string;
-  wordCount: number;
+  // These are JSON[] in Prisma, which typically come as arrays of objects.
+  // We'll assume a structure like { point: string } for keyPoints, etc.
+  keyPoints: { point: string }[];
+  mainIdeas: { idea: string }[];
+  actionItems: { item: string }[];
+  difficulty: string;
+  readingTime: string;
+  confidence: number;
+  userId: string;
+  documentId: string; // Corresponds to uploadId in original UI
+  createdAt: string; // Date object from Prisma will be a string in JSON
+  updatedAt: string;
 }
 
-export default function SummariesPage() {
-  const [summaries, setSummaries] = useState<Summary[]>([]);
+// --- Helper Functions ---
+
+/**
+ * Formats the content from keyPoints, mainIdeas, and actionItems into a single string.
+ * This mimics the original `content` field.
+ */
+const formatSummaryContent = (summary: Summary): string => {
+  let content = "";
+  if (summary.keyPoints && summary.keyPoints.length > 0) {
+    content +=
+      "Key Points:\n" + summary.keyPoints.map((kp) => `- ${kp}`).join("\n");
+  }
+  if (summary.mainIdeas && summary.mainIdeas.length > 0) {
+    if (content) content += "\n\n";
+    content +=
+      "Main Ideas:\n" + summary.mainIdeas.map((mi) => `- ${mi}`).join("\n");
+  }
+  if (summary.actionItems && summary.actionItems.length > 0) {
+    if (content) content += "\n\n";
+    content +=
+      "Action Items:\n" + summary.actionItems.map((ai) => `- ${ai}`).join("\n");
+  }
+  return content;
+};
+
+const getWordCount = (text: string): number => {
+  return text.split(/\s+/).filter((word) => word.length > 0).length;
+};
+
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+};
+
+// --- API Functions for TanStack Query ---
+
+async function fetchSummaries(): Promise<{ summaries: Summary[] }> {
+  const res = await fetch("/api/summarize");
+  if (!res.ok) {
+    if (res.status === 401) {
+      // Optionally redirect to login or handle unauthorized state
+      throw new Error("Unauthorized: Please log in.");
+    }
+    const errorData = await res.json();
+    throw new Error(errorData.error || "Failed to fetch summaries");
+  }
+  return res.json();
+}
+
+// --- Main SummariesPage Component ---
+function SummariesPageContent() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSummary, setSelectedSummary] = useState<Summary | null>(null);
-  const [summaryToDelete, setSummaryToDelete] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [summaryToDeleteId, setSummaryToDeleteId] = useState<string | null>(
+    null
+  ); // Changed name for clarity
 
-  // In a real app, we'd fetch summaries from API
-  // For demo, we'll create mock data
-  useEffect(() => {
-    const fetchData = async () => {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+  const queryClient = useQueryClient();
 
-      const mockData: Summary[] = [
-        {
-          id: "1",
-          title: "Photosynthesis Process",
-          content:
-            "- Photosynthesis is the process where plants convert light energy into chemical energy.\n- Chlorophyll captures sunlight and uses it to transform carbon dioxide and water into glucose and oxygen.\n- Plants use glucose for energy and growth while releasing oxygen as a byproduct.\n- The process primarily takes place in the chloroplasts of plant cells.\n- Key factors affecting photosynthesis rates include light intensity, carbon dioxide concentration, and temperature.",
-          date: "2025-03-15T10:30:00",
-          uploadId: "upload-1",
-          wordCount: 85,
-        },
-        {
-          id: "2",
-          title: "Cell Structure and Function",
-          content:
-            "- Cells are the basic units of life and contain various organelles with specific functions.\n- The nucleus controls cell activities and contains the cell's DNA.\n- Mitochondria are the powerhouses of the cell, producing energy through cellular respiration.\n- The cell membrane regulates what enters and exits the cell.\n- Plant cells have additional structures like cell walls and chloroplasts that animal cells lack.",
-          date: "2025-03-14T14:45:00",
-          uploadId: "upload-2",
-          wordCount: 92,
-        },
-        {
-          id: "3",
-          title: "Newton's Laws of Motion",
-          content:
-            "- Newton's First Law states that objects at rest stay at rest and objects in motion stay in motion unless acted upon by an external force.\n- Newton's Second Law describes the relationship between force, mass, and acceleration (F = ma).\n- Newton's Third Law states that for every action, there is an equal and opposite reaction.\n- These laws form the foundation of classical mechanics and explain everyday motion.\n- Understanding these laws helps predict and analyze the movement of objects in our world.",
-          date: "2025-03-13T09:15:00",
-          uploadId: "upload-3",
-          wordCount: 98,
-        },
-      ];
+  // Query to fetch summaries
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["summaries"],
+    queryFn: fetchSummaries,
+  });
 
-      setSummaries(mockData);
-      setIsLoading(false);
-    };
+  async function deleteSummary(id: string): Promise<{ id: string }> {
+    const res = await fetch(`/api/summarize/${id}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(
+        errorData.error || `Failed to delete summary with ID: ${id}`
+      );
+    }
+    refetch();
+    return res.json();
+  }
 
-    fetchData();
-  }, []);
+  // Mutation to delete a summary
+  const deleteMutation = useMutation({
+    mutationFn: deleteSummary,
+    onSuccess: (data) => {
+      // Invalidate the 'summaries' query to refetch data
+      queryClient.invalidateQueries({ queryKey: ["summaries"] });
+      setSummaryToDeleteId(null); // Close the dialog
+      toast.success(`Summary "${data.id}" deleted successfully!`);
+    },
+    onError: (err) => {
+      toast.error(`Error deleting summary: ${err.message}`);
+    },
+  });
 
-  const handleDelete = (id: string) => {
-    setSummaries((prevSummaries) =>
-      prevSummaries.filter((summary) => summary.id !== id)
-    );
-    setSummaryToDelete(null);
+  const handleDeleteClick = (id: string) => {
+    setSummaryToDeleteId(id);
   };
 
-  const filteredSummaries = summaries.filter(
+  const confirmDelete = () => {
+    if (summaryToDeleteId) {
+      deleteMutation.mutate(summaryToDeleteId);
+    }
+  };
+
+  const allSummaries = data?.summaries || [];
+
+  const filteredSummaries = allSummaries.filter(
     (summary) =>
       summary.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      summary.content.toLowerCase().includes(searchTerm.toLowerCase())
+      formatSummaryContent(summary)
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
   );
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
-  };
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="text-center py-12 space-y-4">
+        <p className="text-destructive">
+          Error: {error?.message || "Failed to load summaries."}
+        </p>
+        <Button
+          onClick={() =>
+            queryClient.invalidateQueries({ queryKey: ["summaries"] })
+          }
+        >
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Retry
+        </Button>
       </div>
     );
   }
@@ -133,12 +217,6 @@ export default function SummariesPage() {
             View and manage your AI-generated summaries
           </p>
         </div>
-        <Link href="/dashboard">
-          <Button>
-            <Upload className="mr-2 h-4 w-4" />
-            New Upload
-          </Button>
-        </Link>
       </div>
 
       {/* Search */}
@@ -155,99 +233,116 @@ export default function SummariesPage() {
       {/* Summaries Grid */}
       {filteredSummaries.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredSummaries.map((summary, index) => (
-            <motion.div
-              key={summary.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
-            >
-              <Card className="h-full flex flex-col">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <FileText className="h-5 w-5 text-primary flex-shrink-0 mt-1" />
-                    <div className="flex items-center space-x-1 text-xs text-foreground/50">
-                      <Calendar className="h-3 w-3" />
-                      <span>{formatDate(summary.date)}</span>
+          {filteredSummaries.map((summary, index) => {
+            const formattedContent = formatSummaryContent(summary);
+            const wordCount = getWordCount(formattedContent);
+
+            return (
+              <motion.div
+                key={summary.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
+              >
+                <Card className="h-full flex flex-col">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <FileText className="h-5 w-5 text-primary flex-shrink-0 mt-1" />
+                      <div className="flex items-center space-x-1 text-xs text-foreground/50">
+                        <Calendar className="h-3 w-3" />
+                        <span>{formatDate(summary.createdAt)}</span>
+                      </div>
                     </div>
-                  </div>
-                  <CardTitle className="text-lg line-clamp-2">
-                    {summary.title}
-                  </CardTitle>
-                  <CardDescription>{summary.wordCount} words</CardDescription>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <div className="text-sm text-foreground/70 line-clamp-4">
-                    {summary.content
-                      .split("\n")
-                      .slice(0, 3)
-                      .map((line, i) =>
-                        line.trim() ? (
-                          <p key={i} className="mb-1">
-                            {line.trim()}
-                          </p>
-                        ) : null
-                      )}
-                  </div>
-                </CardContent>
-                <div className="px-6 pb-6 pt-2 border-t flex justify-between">
-                  <div className="space-x-2">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setSelectedSummary(summary)}
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          View
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                        <DialogHeader>
-                          <DialogTitle>{selectedSummary?.title}</DialogTitle>
-                          <DialogDescription>
-                            Generated on{" "}
-                            {selectedSummary &&
-                              formatDate(selectedSummary.date)}
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="mt-4">
-                          <div className="prose dark:prose-invert max-w-none">
-                            {selectedSummary?.content
-                              .split("\n")
-                              .map((line, i) =>
-                                line.trim() ? (
-                                  <p key={i} className="mb-2">
-                                    {line.trim()}
-                                  </p>
-                                ) : null
-                              )}
-                          </div>
-                        </div>
-                        <DialogFooter>
-                          <Link
-                            href={`/dashboard/editor/${selectedSummary?.uploadId}`}
+                    <CardTitle className="text-lg line-clamp-2">
+                      {summary.title}
+                    </CardTitle>
+                    <CardDescription>{wordCount} words</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-grow">
+                    <div className="text-sm text-foreground/70 line-clamp-4">
+                      {formattedContent
+                        .split("\n")
+                        .slice(0, 3) // Only show first 3 lines in card preview
+                        .map((line, i) =>
+                          line.trim() ? (
+                            <p key={i} className="mb-1">
+                              {line.trim()}
+                            </p>
+                          ) : null
+                        )}
+                    </div>
+                  </CardContent>
+                  <div className="px-6 pb-6 pt-2 border-t flex justify-between">
+                    <div className="space-x-2">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setSelectedSummary(summary)}
                           >
-                            <Button>
-                              <ExternalLink className="h-4 w-4 mr-2" />
-                              View Original
-                            </Button>
-                          </Link>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                    <Link href={`/dashboard/editor/${summary.uploadId}`}>
-                      <Button size="sm" variant="outline">
-                        <ExternalLink className="h-4 w-4 mr-1" />
-                        Edit
-                      </Button>
-                    </Link>
+                            <Eye className="h-4 w-4 mr-1" />
+                            View
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>{selectedSummary?.title}</DialogTitle>
+                            <DialogDescription>
+                              Generated on{" "}
+                              {selectedSummary &&
+                                formatDate(selectedSummary.createdAt)}
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="mt-4">
+                            <div className="prose dark:prose-invert max-w-none">
+                              {selectedSummary?.id === summary.id && // Only render content if this is the currently selected summary
+                                formatSummaryContent(selectedSummary)
+                                  .split("\n")
+                                  .map((line, i) =>
+                                    line.trim() ? (
+                                      <p key={i} className="mb-2">
+                                        {line.trim()}
+                                      </p>
+                                    ) : null
+                                  )}
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <Link
+                              href={`/reader/${selectedSummary?.documentId}?tab=reader`} // Use documentId
+                            >
+                              <Button>
+                                <ExternalLink className="h-4 w-4 mr-2" />
+                                View Original
+                              </Button>
+                            </Link>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                      <Link href={`/dashboard/editor/${summary.documentId}`}>
+                        {" "}
+                        {/* Use documentId */}
+                        <Button size="sm" variant="outline">
+                          <ExternalLink className="h-4 w-4 mr-1" />
+                          Edit
+                        </Button>
+                      </Link>
+                    </div>
+                    {/* Delete Button */}
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleDeleteClick(summary.id)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Delete
+                    </Button>
                   </div>
-                </div>
-              </Card>
-            </motion.div>
-          ))}
+                </Card>
+              </motion.div>
+            );
+          })}
         </div>
       ) : (
         <Card>
@@ -275,8 +370,11 @@ export default function SummariesPage() {
 
       {/* Delete Confirmation Dialog */}
       <Dialog
-        open={!!summaryToDelete}
-        onOpenChange={() => setSummaryToDelete(null)}
+        open={!!summaryToDeleteId}
+        onOpenChange={() => {
+          setSummaryToDeleteId(null);
+          deleteMutation.reset(); // Reset mutation state if dialog is closed manually
+        }}
       >
         <DialogContent>
           <DialogHeader>
@@ -287,18 +385,32 @@ export default function SummariesPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setSummaryToDelete(null)}>
+            <Button
+              variant="outline"
+              onClick={() => setSummaryToDeleteId(null)}
+              disabled={deleteMutation.isPending}
+            >
               Cancel
             </Button>
             <Button
               variant="destructive"
-              onClick={() => summaryToDelete && handleDelete(summaryToDelete)}
+              onClick={confirmDelete}
+              disabled={deleteMutation.isPending}
             >
-              Delete
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+// Wrap the component with QueryClientProvider
+export default function SummariesPage() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <SummariesPageContent />
+    </QueryClientProvider>
   );
 }

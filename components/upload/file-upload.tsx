@@ -26,7 +26,7 @@ interface FileUploadProps {
 interface UploadedFile {
   file: File;
   progress: number;
-  status: "uploading" | "processing" | "summarizing" | "completed" | "error";
+  status: "uploading" | "processing" | "completed" | "error"; // 'summarizing' removed
   id: string;
   documentId?: string;
 }
@@ -34,55 +34,7 @@ interface UploadedFile {
 export function FileUpload({ onClose, setIsUploadComplete }: FileUploadProps) {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
 
-  // track uploaded documents to summarize them immediately
-  const [documentId, setDocumentId] = useState("");
-  const [documentContent, setDocumentContent] = useState("");
-  const [documentTitle, setDocumentTitle] = useState("");
-
-  const summarizeContent = useCallback(
-    async (
-      file: File,
-      updateProgress: (
-        progress: number,
-        status?: UploadedFile["status"]
-      ) => void
-    ) => {
-      if (!documentContent || !documentId) return;
-      try {
-        const formData = new FormData();
-        formData.append("title", documentTitle);
-        formData.append("documentId", documentId);
-        formData.append("content", documentContent);
-
-        const response = await fetch("/api/summarize", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to summarize file");
-        }
-
-        const result = await response.json();
-
-        if (result.success) {
-          updateProgress(100, "completed");
-          toast.success(`${file.name} summarized successfully!`);
-        } else {
-          throw new Error(result.error || "Summarization failed");
-        }
-      } catch (error) {
-        console.error("File summarization error:", error);
-        updateProgress(0, "error");
-        toast.error(
-          `Failed to summarize ${file.name}: ${
-            error instanceof Error ? error.message : "Unknown error"
-          }`
-        );
-      }
-    },
-    []
-  );
+  // Removed documentId, documentContent, documentTitle as they were for summarization
 
   const processFile = useCallback(
     async (
@@ -118,15 +70,13 @@ export function FileUpload({ onClose, setIsUploadComplete }: FileUploadProps) {
         const result = await response.json();
 
         if (result.success) {
-          updateProgress(100, "completed");
+          updateProgress(100, "completed"); // Mark as completed after processing
           toast.success(`${file.name} processed successfully!`);
-          setDocumentId(result.documentId);
-          setDocumentContent(result.content);
-          setDocumentTitle(result.title);
+          // Removed documentId, documentContent, documentTitle state updates
 
-          updateProgress(100, "processing");
-          //summarize file content
-          setTimeout(() => summarizeContent(file, updateProgress), 500);
+          // Removed summarization call:
+          // updateProgress(100, "summarizing");
+          // setTimeout(() => summarizeContent(file, updateProgress), 500);
 
           // Update the file with the actual document ID from the server
           setUploadedFiles((prev) =>
@@ -148,7 +98,7 @@ export function FileUpload({ onClose, setIsUploadComplete }: FileUploadProps) {
         );
       }
     },
-    [setIsUploadComplete, summarizeContent]
+    [setIsUploadComplete] // Removed summarizeContent from dependencies
   );
 
   const simulateUpload = useCallback(
@@ -245,6 +195,8 @@ export function FileUpload({ onClose, setIsUploadComplete }: FileUploadProps) {
         return "text-blue-600";
       case "processing":
         return "text-purple-600";
+      // case "summarizing": // Removed
+      //   return "text-purple-600";
       case "completed":
         return "text-green-600";
       case "error":
@@ -260,6 +212,8 @@ export function FileUpload({ onClose, setIsUploadComplete }: FileUploadProps) {
         return "Uploading...";
       case "processing":
         return "Processing with AI...";
+      // case "summarizing": // Removed
+      //   return "Summarizing with AI...";
       case "completed":
         return "Ready to read!";
       case "error":
@@ -275,8 +229,8 @@ export function FileUpload({ onClose, setIsUploadComplete }: FileUploadProps) {
         return <Upload className="h-4 w-4 animate-bounce" />;
       case "processing":
         return <Sparkles className="h-4 w-4 animate-spin" />;
-      case "summarizing":
-        return <Sparkles className="h-4 w-4 animate-spin" />;
+      // case "summarizing": // Removed
+      //   return <Sparkles className="h-4 w-4 animate-spin" />;
       case "completed":
         return <CheckCircle className="h-4 w-4" />;
       case "error":
@@ -496,9 +450,10 @@ export function FileUpload({ onClose, setIsUploadComplete }: FileUploadProps) {
               if (completedDocs.length > 0) {
                 const docWithId = completedDocs.find((f) => f.documentId);
                 if (docWithId) {
-                  window.location.href = `/reader/${docWithId.documentId}`;
+                  window.location.href = `/reader/${docWithId.documentId}?tab=reader`;
                 } else {
                   // Fallback to first completed doc with original ID
+                  // This fallback might not be strictly necessary if documentId is always expected from /api/extract
                   window.location.href = `/reader/${completedDocs[0].id}`;
                 }
                 toast.success(

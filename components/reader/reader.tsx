@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { DocumentViewer } from "./document-viewer";
@@ -16,6 +16,7 @@ import {
   Menu,
 } from "lucide-react";
 import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 
 interface ReaderProps {
   documentId: string;
@@ -24,20 +25,27 @@ interface ReaderProps {
 
 type ViewMode = "reader" | "summary" | "quiz";
 
-export function Reader({ documentId, document: propDocument }: ReaderProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>("reader");
+const ReaderComponent = ({
+  documentId,
+  document: propDocument,
+}: ReaderProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [content, setContent] = useState<string>("");
   const [currentChapter, setCurrentChapter] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [highlightedWordIndex, setHighlightedWordIndex] = useState(-1);
   const [document, setDocument] = useState(propDocument);
+  const params = useSearchParams();
+  const currentTab = params.get("tab");
+  const pathName = usePathname();
 
   // Update document when prop changes
   useEffect(() => {
     if (propDocument) {
       setDocument(propDocument);
+      setContent(propDocument.content);
     }
-  }, [propDocument]);
+  }, [propDocument, setContent]);
 
   // Update reading progress
   useEffect(() => {
@@ -80,15 +88,15 @@ export function Reader({ documentId, document: propDocument }: ReaderProps) {
     setHighlightedWordIndex(wordIndex);
   };
 
-  // if (!document) {
-  //   return (
-  //     <div className="h-screen flex items-center justify-center">
-  //       <p className="text-gray-600 dark:text-gray-300">
-  //         Document not available
-  //       </p>
-  //     </div>
-  //   );
-  // }
+  if (!document) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <p className="text-gray-600 dark:text-gray-300">
+          Document not available
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col ">
@@ -114,16 +122,12 @@ export function Reader({ documentId, document: propDocument }: ReaderProps) {
             <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
               {document?.title}
             </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Chapter {currentChapter + 1} of {document?.chapters?.length} •{" "}
-              {document?.estimatedReadTime} min read
-            </p>
           </div>
         </div>
 
         <div className="flex items-center space-x-2">
           {/* View Mode Selector */}
-          <div className="hidden md:flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+          <div className="hidden md:flex  rounded-lg p-1 bg-gray-100 dark:bg-gray-800">
             {viewModeButtons.map(({ mode, icon: Icon, label }) => (
               <motion.div
                 key={mode}
@@ -131,17 +135,19 @@ export function Reader({ documentId, document: propDocument }: ReaderProps) {
                 whileTap={{ scale: 0.98 }}
               >
                 <Button
-                  variant={viewMode === mode ? "default" : "ghost"}
+                  variant={"ghost"}
                   size="sm"
-                  onClick={() => setViewMode(mode)}
                   className={
-                    viewMode === mode
-                      ? "bg-background/50 dark:text-white text-black  shadow-sm"
-                      : ""
+                    currentTab?.toLowerCase() === mode.toLowerCase()
+                      ? " dark:text-white text-black bg-gray-200 dark:bg-gray-900 shadow-sm"
+                      : "hover:bg-gray-200 hover:dark:bg-gray-900"
                   }
+                  asChild
                 >
-                  <Icon className="h-4 w-4 mr-2" />
-                  {label}
+                  <Link href={`${pathName}?tab=${mode.toLowerCase()}`}>
+                    <Icon className="h-4 w-4 mr-2" />
+                    {label}
+                  </Link>
                 </Button>
               </motion.div>
             ))}
@@ -173,22 +179,31 @@ export function Reader({ documentId, document: propDocument }: ReaderProps) {
           {/* Content Area */}
           <div className="flex-1 overflow-hidden">
             <motion.div
-              key={viewMode}
+              key={currentTab}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3 }}
               className="h-full"
             >
-              {viewMode === "reader" && (
+              {currentTab === "reader" && (
                 <DocumentViewer
                   document={document}
-                  currentChapter={currentChapter}
-                  onChapterChange={setCurrentChapter}
-                  highlightedWordIndex={highlightedWordIndex}
+                  content={document.content}
                 />
               )}
-              {viewMode === "summary" && <SummaryPanel document={document} />}
-              {viewMode === "quiz" && <QuizPanel document={document} />}
+              {currentTab === "summary" && <SummaryPanel document={document} />}
+              {currentTab === "quiz" && <QuizPanel document={document} />}
+
+              {currentTab !== "reader" &&
+                currentTab !== "summary" &&
+                currentTab !== "quiz" && (
+                  <div className="h-screen flex items-center justify-center">
+                    <p className="text-gray-600 dark:text-gray-300">
+                      Document not available or invalid tab. Check the tab value
+                      in url.
+                    </p>
+                  </div>
+                )}
             </motion.div>
           </div>
 
@@ -197,9 +212,7 @@ export function Reader({ documentId, document: propDocument }: ReaderProps) {
             document={document}
             isPlaying={isPlaying}
             onPlayPause={handlePlayPause}
-            currentChapter={currentChapter}
-            onChapterChange={setCurrentChapter}
-            onWordHighlight={handleWordHighlight}
+            content={document.content}
           />
         </div>
 
@@ -210,19 +223,23 @@ export function Reader({ documentId, document: propDocument }: ReaderProps) {
           transition={{ delay: 0.5 }}
           className="md:hidden fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50"
         >
-          <div className="flex  rounded-full shadow-lg border  p-1">
+          <div className="flex rounded-full shadow-lg border  p-1 items-center gap-6">
             {viewModeButtons.map(({ mode, icon: Icon, label }) => (
               <motion.div
                 key={mode}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                className="flex items-center gap-6"
               >
                 <Button
-                  variant={viewMode === mode ? "default" : "ghost"}
+                  variant={
+                    currentTab?.toLocaleLowerCase() === mode
+                      ? "default"
+                      : "ghost"
+                  }
                   size="sm"
-                  onClick={() => setViewMode(mode)}
                   className={`rounded-full ${
-                    viewMode === mode
+                    currentTab?.toLowerCase() === mode.toLowerCase()
                       ? "bg-purple-600 hover:bg-purple-700 text-white"
                       : ""
                   }`}
@@ -236,5 +253,13 @@ export function Reader({ documentId, document: propDocument }: ReaderProps) {
         </motion.div>
       </div>
     </div>
+  );
+};
+
+export function Reader({ documentId, document }: ReaderProps) {
+  return (
+    <Suspense>
+      <ReaderComponent documentId={documentId} document={document} />
+    </Suspense>
   );
 }

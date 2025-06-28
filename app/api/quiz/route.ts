@@ -205,6 +205,22 @@ export async function POST(request: NextRequest) {
       // Ensure we don't exceed requested question count
       questions = questions.slice(0, questionCount);
 
+      // check if quiz for document already exists, delete and create new one
+      const documentExists = await prisma.quiz.findFirst({
+        where: {
+          documentId,
+          userId: session.user.id,
+        },
+      });
+
+      if (documentExists) {
+        await prisma.quiz.delete({
+          where: {
+            documentId,
+          },
+        });
+      }
+
       // Save quiz to db
       const newQuiz = await prisma.quiz.create({
         data: {

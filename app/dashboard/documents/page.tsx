@@ -1,18 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Header } from "@/components/layout/header";
 import {
   FileText,
   Search,
   MoreHorizontal,
   Eye,
-  Trash2,
   Upload,
   Clock,
   Calendar,
@@ -35,6 +39,16 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
+// --- 1) Debounce hook
+function useDebounce<T>(value: T, delay = 500): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debounced;
+}
+
 interface Document {
   id: string;
   title: string;
@@ -51,76 +65,12 @@ interface Document {
   category: string;
 }
 
-export default function DocumentsPage() {
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState("updatedAt");
-  const [sortOrder, setSortOrder] = useState("desc");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-
-  useEffect(() => {
-    const fetchDocuments = async () => {
-      try {
-        setIsLoading(true);
-        const params = new URLSearchParams({
-          page: currentPage.toString(),
-          limit: "12",
-          sortBy,
-          sortOrder,
-          ...(searchQuery && { search: searchQuery }),
-        });
-
-        const response = await fetch(`/api/documents?${params}`);
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch documents");
-        }
-
-        const data = await response.json();
-        setDocuments(data.documents || []);
-        setTotalPages(data.pagination?.pages || 1);
-      } catch (error) {
-        console.error("Failed to fetch documents:", error);
-        toast.error("Failed to load documents");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchDocuments();
-  }, [searchQuery, sortBy, sortOrder, currentPage]);
-
-  const handleDeleteDocument = async (documentId: string, title: string) => {
-    if (!confirm(`Are you sure you want to delete "${title}"?`)) {
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/documents/${documentId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete document");
-      }
-
-      setDocuments((prev) => prev.filter((doc) => doc.id !== documentId));
-      toast.success("Document deleted successfully");
-    } catch (error) {
-      console.error("Failed to delete document:", error);
-      toast.error("Failed to delete document");
-    }
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-  };
-
+// --- 2) Memoized card — prevents re-renders when props didn’t actually change
+const DocumentCard = React.memo(function DocumentCard({
+  doc,
+}: {
+  doc: Document;
+}) {
   const categoryColors: Record<string, string> = {
     Technology: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
     Science:
@@ -131,6 +81,164 @@ export default function DocumentsPage() {
       "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300",
     General: "bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300",
   };
+
+  const formatFileSize = useCallback((bytes: number) => {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  }, []);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Card className="hover:shadow-lg transition-shadow duration-300 group">
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between">
+            <div className="flex-1 min-w-0">
+              <Link href={`/reader/${doc.id}?tab=reader`}>
+                <h3 className="font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer truncate">
+                  {doc.title}
+                </h3>
+              </Link>
+              <div className="flex items-center space-x-2 mt-1">
+                <Badge
+                  variant="secondary"
+                  className={
+                    categoryColors[doc.category] || categoryColors.General
+                  }
+                >
+                  {doc.category}
+                </Badge>
+                <span className="text-xs text-gray-500 dark:text-gray-400 uppercase">
+                  {doc.type}
+                </span>
+              </div>
+            </div>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link href={`/reader/${doc.id}?tab=reader`}>
+                    <Eye className="h-4 w-4 mr-2" />
+                    Open
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </CardHeader>
+
+        <CardContent>
+          <div className="space-y-3">
+            <div className="text-sm text-gray-600 dark:text-gray-300">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center">
+                  <FileText className="h-3 w-3 mr-1" />
+                  {doc.wordCount.toLocaleString()} words
+                </span>
+                <span className="flex items-center">
+                  <Clock className="h-3 w-3 mr-1" />
+                  {doc.estimatedReadTime} min
+                </span>
+              </div>
+              <div className="flex items-center justify-between mt-1">
+                <span>{formatFileSize(doc.fileSize)}</span>
+                <span className="flex items-center text-xs">
+                  <Calendar className="h-3 w-3 mr-1" />
+                  {formatDistanceToNow(new Date(doc.updatedAt), {
+                    addSuffix: true,
+                  })}
+                </span>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+                <span>Progress</span>
+                <span>{Math.round(doc.progress)}%</span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div
+                  className="bg-gradient-to-r from-purple-600 to-blue-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${doc.progress}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+});
+
+export default function DocumentsPage() {
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("updatedAt");
+  const [sortOrder, setSortOrder] = useState("desc");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  // 3) Debounced value
+  const debouncedSearch = useDebounce(searchQuery, 500);
+
+  // 4) Keep track of last controller so we can abort
+  const abortCtrl = useRef<AbortController>();
+
+  const fetchDocuments = useCallback(async () => {
+    if (abortCtrl.current) abortCtrl.current.abort();
+    abortCtrl.current = new AbortController();
+
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: "12",
+        sortBy,
+        sortOrder,
+        ...(debouncedSearch && { search: debouncedSearch }),
+      });
+
+      const res = await fetch(`/api/documents?${params}`, {
+        signal: abortCtrl.current.signal,
+      });
+      if (!res.ok) throw new Error("Fetch failed");
+      const data = await res.json();
+      setDocuments(data.documents || []);
+      setTotalPages(data.pagination?.pages || 1);
+    } catch (err: any) {
+      if (err.name !== "AbortError") {
+        console.error(err);
+        toast.error("Failed to load documents");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentPage, sortBy, sortOrder, debouncedSearch]);
+
+  useEffect(() => {
+    fetchDocuments();
+  }, [fetchDocuments]);
+
+  const categoryOptions = useMemo(
+    () => ["updatedAt", "createdAt", "title", "wordCount"] as const,
+    []
+  );
 
   return (
     <div className="h-screen overflow-auto paddingX">
@@ -177,10 +285,17 @@ export default function DocumentsPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="updatedAt">Last Modified</SelectItem>
-                <SelectItem value="createdAt">Date Created</SelectItem>
-                <SelectItem value="title">Title</SelectItem>
-                <SelectItem value="wordCount">Word Count</SelectItem>
+                {categoryOptions.map((opt) => (
+                  <SelectItem key={opt} value={opt}>
+                    {opt === "updatedAt"
+                      ? "Last Modified"
+                      : opt === "createdAt"
+                      ? "Date Created"
+                      : opt === "title"
+                      ? "Title"
+                      : "Word Count"}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Select value={sortOrder} onValueChange={setSortOrder}>
@@ -196,7 +311,7 @@ export default function DocumentsPage() {
 
           {/* Documents Grid */}
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {[...Array(8)].map((_, i) => (
                 <Card key={i}>
                   <CardHeader>
@@ -217,7 +332,7 @@ export default function DocumentsPage() {
                 No documents found
               </h3>
               <p className="text-gray-500 dark:text-gray-400 mb-6">
-                {searchQuery
+                {debouncedSearch
                   ? "Try adjusting your search terms"
                   : "Upload your first document to get started"}
               </p>
@@ -229,110 +344,9 @@ export default function DocumentsPage() {
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {documents.map((doc, index) => (
-                <motion.div
-                  key={doc.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.05 }}
-                >
-                  <Card className="hover:shadow-lg transition-shadow duration-300 group">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <Link href={`/reader/${doc.id}`}>
-                            <h3 className="font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer truncate">
-                              {doc.title}
-                            </h3>
-                          </Link>
-                          <div className="flex items-center space-x-2 mt-1">
-                            <Badge
-                              variant="secondary"
-                              className={
-                                categoryColors[doc.category] ||
-                                categoryColors["General"]
-                              }
-                            >
-                              {doc.category}
-                            </Badge>
-                            <span className="text-xs text-gray-500 dark:text-gray-400 uppercase">
-                              {doc.type}
-                            </span>
-                          </div>
-                        </div>
-
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                              <Link href={`/reader/${doc.id}`}>
-                                <Eye className="h-4 w-4 mr-2" />
-                                Open
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() =>
-                                handleDeleteDocument(doc.id, doc.title)
-                              }
-                              className="text-red-600 dark:text-red-400"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </CardHeader>
-
-                    <CardContent>
-                      <div className="space-y-3">
-                        <div className="text-sm text-gray-600 dark:text-gray-300">
-                          <div className="flex items-center justify-between">
-                            <span className="flex items-center">
-                              <FileText className="h-3 w-3 mr-1" />
-                              {doc.wordCount.toLocaleString()} words
-                            </span>
-                            <span className="flex items-center">
-                              <Clock className="h-3 w-3 mr-1" />
-                              {doc.estimatedReadTime} min
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between mt-1">
-                            <span>{formatFileSize(doc.fileSize)}</span>
-                            <span className="flex items-center text-xs">
-                              <Calendar className="h-3 w-3 mr-1" />
-                              {formatDistanceToNow(new Date(doc.updatedAt), {
-                                addSuffix: true,
-                              })}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div>
-                          <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-                            <span>Progress</span>
-                            <span>{Math.round(doc.progress)}%</span>
-                          </div>
-                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                            <div
-                              className="bg-gradient-to-r from-purple-600 to-blue-600 h-2 rounded-full transition-all duration-300"
-                              style={{ width: `${doc.progress}%` }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
+            <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {documents.map((doc) => (
+                <DocumentCard key={doc.id} doc={doc} />
               ))}
             </div>
           )}
@@ -342,7 +356,7 @@ export default function DocumentsPage() {
             <div className="flex justify-center space-x-2 mt-8">
               <Button
                 variant="outline"
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
                 disabled={currentPage === 1}
               >
                 Previous
@@ -353,7 +367,7 @@ export default function DocumentsPage() {
               <Button
                 variant="outline"
                 onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  setCurrentPage((p) => Math.min(p + 1, totalPages))
                 }
                 disabled={currentPage === totalPages}
               >

@@ -6,8 +6,7 @@ import { z } from "zod";
 
 const updateDocumentSchema = z.object({
   title: z.string().min(1).max(200).optional(),
-  progress: z.number().min(0).max(100).optional(),
-  metadata: z.object({}).optional(),
+  content: z.string().optional(),
 });
 
 export async function GET(

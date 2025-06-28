@@ -54,14 +54,6 @@ export async function POST() {
           { status: 409 }
         );
       }
-
-      return NextResponse.json(
-        {
-          error:
-            "Data exported already. Request for another one in 4 hours time.",
-        },
-        { status: 403 }
-      );
     }
 
     // Save exported data

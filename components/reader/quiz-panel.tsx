@@ -18,7 +18,11 @@ import {
   Loader2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "sonner";
+import { toast } from "sonner"; // Assuming sonner toast is configured
+import { QuizType } from "@prisma/client";
+
+// Import Tanstack Query hooks
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface Document {
   id: string;
@@ -33,7 +37,7 @@ interface QuizPanelProps {
 
 interface Question {
   id: string;
-  type: "multiple-choice" | "fill-in-blank" | "true-false";
+  type: QuizType;
   question: string;
   options?: string[];
   correctAnswer: string;
@@ -55,93 +59,167 @@ interface QuizMetadata {
   createdAt: string;
 }
 
+// Define the shape of the data returned by the fetch quiz API
+interface QuizResponse {
+  success: boolean;
+  id: string; // Quiz ID
+  questions: Question[];
+  metadata: QuizMetadata;
+  error?: string;
+}
+
+// Helper function for fetching an existing quiz by document ID
+// Changed to GET for RESTfulness, assuming backend supports it via query param
+const getQuizByDocumentId = async (
+  documentId: string
+): Promise<QuizResponse | null> => {
+  const response = await fetch(`/api/quiz/${documentId}`, {
+    method: "GET", // Changed to GET
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (response.status === 404 || response.status === 204) {
+    // No quiz found for this document, not an error state
+    return null;
+  }
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(
+      errorData.error ||
+        `Failed to fetch quiz: ${response.status} ${response.statusText}`
+    );
+  }
+
+  const data: QuizResponse = await response.json();
+  if (!data.success) {
+    // If success is false, even if status is OK, treat as error
+    throw new Error(data.error || "Failed to fetch quiz due to server logic.");
+  }
+  return data;
+};
+
+// Helper function for creating a new quiz
+interface CreateQuizPayload {
+  content: string;
+  difficulty: "easy" | "medium" | "hard";
+  questionCount: number;
+  documentId: string;
+  title: string;
+}
+
+const createQuiz = async (
+  payload: CreateQuizPayload
+): Promise<QuizResponse> => {
+  const response = await fetch(`/api/quiz`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(
+      errorData.error ||
+        `Failed to generate quiz: ${response.status} ${response.statusText}`
+    );
+  }
+
+  const data: QuizResponse = await response.json();
+  if (!data.success || !data.questions || data.questions.length === 0) {
+    throw new Error(
+      data.error || "Failed to generate quiz or no questions returned."
+    );
+  }
+  return data;
+};
+
 export function QuizPanel({ document }: QuizPanelProps) {
+  const queryClient = useQueryClient();
+
+  // UI-specific states (not managed by Tanstack Query)
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [userAnswers, setUserAnswers] = useState<Record<string, string>>({});
   const [showResults, setShowResults] = useState(false);
   const [quizCompleted, setQuizCompleted] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [results, setResults] = useState<QuizResult[]>([]);
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [quizMetadata, setQuizMetadata] = useState<QuizMetadata | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
     "medium"
   );
   const [questionCount, setQuestionCount] = useState<number>(10);
 
-  console.log({ quizCompleted, quizMetadata });
+  // Tanstack Query for fetching existing quiz
+  const {
+    data: quizData,
+    isLoading: isQuizLoading, // Initial fetch loading state
+    isError: isQuizError, // Error state for fetch
+    error: quizError, // Error object for fetch
+    isFetched, // True if the query has completed at least one fetch
+  } = useQuery<QuizResponse | null, Error>({
+    queryKey: ["quiz", document.id],
+    queryFn: () => getQuizByDocumentId(document.id),
+    enabled: !!document.id, // Only run the query if document.id is available
+    staleTime: 5 * 60 * 1000, // Data considered fresh for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep data in cache for 10 minutes
+  });
 
-  // Generate quiz when component loads
-  const generateNewQuiz = useCallback(() => {
-    return async () => {
-      setIsGenerating(true);
-      setError(null);
+  // Tanstack Mutation for generating a new quiz
+  const createQuizMutation = useMutation<
+    QuizResponse,
+    Error,
+    CreateQuizPayload
+  >({
+    mutationFn: createQuiz,
+    onSuccess: (data) => {
+      // Invalidate the existing quiz query to force a refetch of the new quiz
+      queryClient.invalidateQueries({ queryKey: ["quiz", document.id] });
+      // The onSuccess of useQuery will handle updating quizData and UI states
+      toast.success(`Generated ${data.questions?.length || 0} quiz questions!`);
+    },
+    onError: (error) => {
+      toast.error(`Error generating quiz: ${error.message}`);
+    },
+  });
 
-      try {
-        // Use first 4000 characters of content to avoid token limits
-        const contentToUse = document.content.substring(0, 4000);
+  // Derived states from Tanstack Query results
+  const questions = quizData?.questions || [];
+  const quizId = quizData?.id || null;
+  const quizMetadata = quizData?.metadata || null;
+  const isGenerating = createQuizMutation.isPending; // True if a new quiz is being generated
+  // Consolidated error message from either fetching or generating
+  const currentError = isQuizError
+    ? quizError.message
+    : createQuizMutation.isError
+    ? createQuizMutation.error.message
+    : null;
 
-        const response = await fetch("/api/quiz", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            content: contentToUse,
-            difficulty: difficulty,
-            questionCount: questionCount,
-          }),
-        });
+  // Callback to reset UI states for a new quiz attempt
+  const restartQuiz = useCallback(() => {
+    setCurrentQuestion(0);
+    setUserAnswers({});
+    setShowResults(false);
+    setQuizCompleted(false);
+    setResults([]);
+  }, []);
 
-        if (!response.ok) {
-          throw new Error(`Failed to generate quiz: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (data.success) {
-          setQuestions(data.questions || []);
-          setQuizMetadata(data.metadata);
-          restartQuiz(); // Reset quiz state
-          toast.success(
-            `Generated ${data.questions?.length || 0} quiz questions!`
-          );
-        } else {
-          throw new Error(data.error || "Failed to generate quiz");
-        }
-      } catch (error) {
-        console.error("Quiz generation failed:", error);
-        const errorMessage =
-          error instanceof Error ? error.message : "Failed to generate quiz";
-        setError(errorMessage);
-        toast.error(errorMessage);
-
-        // Set fallback questions if generation fails
-        setQuestions([
-          {
-            id: "1",
-            type: "multiple-choice",
-            question: "What is the main topic of this document?",
-            options: [
-              "Primary concept discussed",
-              "Secondary topic mentioned",
-              "Unrelated concept",
-              "Background information",
-            ],
-            correctAnswer: "Primary concept discussed",
-            explanation: "This is the main focus of the provided content.",
-            difficulty: "Easy",
-          },
-        ]);
-      } finally {
-        setIsGenerating(false);
-      }
-    };
-  }, [difficulty, document.content, questionCount]);
-  useEffect(() => {
-    if (document && questions.length === 0) {
-      generateNewQuiz();
-    }
-  }, [document, generateNewQuiz, questions.length]);
+  // Handler for generating a new quiz via mutation
+  const handleGenerateNewQuiz = useCallback(() => {
+    const contentToUse = document.content.substring(0, 4000); // Limit content for API
+    createQuizMutation.mutate({
+      content: contentToUse,
+      difficulty: difficulty,
+      questionCount: questionCount,
+      documentId: document.id,
+      title: document.title,
+    });
+  }, [
+    createQuizMutation,
+    document.content,
+    document.id,
+    document.title,
+    difficulty,
+    questionCount,
+  ]);
 
   const handleAnswerChange = (questionId: string, answer: string) => {
     setUserAnswers((prev) => ({
@@ -173,15 +251,7 @@ export function QuizPanel({ document }: QuizPanelProps) {
     toast.success(
       `Quiz completed! You scored ${percentage}% (${correctCount}/${questions.length})`
     );
-  };
-
-  const restartQuiz = () => {
-    setCurrentQuestion(0);
-    setUserAnswers({});
-    setShowResults(false);
-    setQuizCompleted(false);
-    setResults([]);
-    setError(null);
+    // Optionally, update quiz score on server if quizId is set
   };
 
   const nextQuestion = () => {
@@ -214,10 +284,17 @@ export function QuizPanel({ document }: QuizPanelProps) {
     }
   };
 
-  if (isGenerating) {
+  // --- Conditional Renders (Revised Order) ---
+
+  // 1. Initial Load or Generation in Progress:
+  // `isQuizLoading` covers the initial data fetch.
+  // `isGenerating` covers the new quiz generation.
+  // `!isFetched` ensures we show this for the very first attempt to get data,
+  // preventing a flash of "no quiz available" before the fetch completes.
+  if (isQuizLoading || isGenerating || (!isFetched && !currentError)) {
     return (
-      <div className="h-full flex flex-col bg-white dark:bg-gray-900">
-        <div className="border-b  p-6">
+      <div className="h-full flex flex-col ">
+        <div className="border-b p-6">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/50 dark:to-blue-900/50 rounded-lg">
               <MessageSquare className="h-5 w-5 text-purple-600 dark:text-purple-400" />
@@ -227,7 +304,8 @@ export function QuizPanel({ document }: QuizPanelProps) {
                 Interactive Quiz
               </h2>
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                Generating questions for {document.title}
+                {isGenerating ? "Preparing questions for" : "Loading quiz for"}{" "}
+                {document.title}
               </p>
             </div>
           </div>
@@ -237,11 +315,12 @@ export function QuizPanel({ document }: QuizPanelProps) {
           <div className="text-center">
             <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-purple-600" />
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              Generating Quiz Questions
+              {isGenerating ? "Preparing Quiz" : "Loading Quiz"}
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
-              AI is analyzing your document to create personalized quiz
-              questions...
+              {isGenerating
+                ? "Generating new questions..."
+                : "Checking for existing quiz or fetching..."}
             </p>
           </div>
         </div>
@@ -249,10 +328,14 @@ export function QuizPanel({ document }: QuizPanelProps) {
     );
   }
 
-  if (error && questions.length === 0) {
+  // 2. Error State (after an attempt, and no questions are loaded):
+  // This triggers if fetching/generating failed and `currentError` is populated,
+  // AND `questions` are empty (meaning no successful data fetch).
+  // `isFetched` ensures we only show this after an initial fetch attempt.
+  if (currentError && questions.length === 0 && isFetched) {
     return (
-      <div className="h-full flex flex-col bg-white dark:bg-gray-900">
-        <div className="border-b  p-6">
+      <div className="h-full flex flex-col ">
+        <div className="border-b p-6">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/50 dark:to-blue-900/50 rounded-lg">
               <MessageSquare className="h-5 w-5 text-purple-600 dark:text-purple-400" />
@@ -272,14 +355,17 @@ export function QuizPanel({ document }: QuizPanelProps) {
           <div className="text-center max-w-md">
             <AlertCircle className="h-16 w-16 text-red-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              Quiz Generation Failed
+              Quiz Operation Failed
             </h3>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">{error}</p>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              {currentError}
+            </p>
             <Button
-              onClick={generateNewQuiz}
+              onClick={handleGenerateNewQuiz}
+              disabled={isGenerating}
               className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
             >
-              Try Again
+              Try Again / Generate New
             </Button>
           </div>
         </div>
@@ -287,10 +373,63 @@ export function QuizPanel({ document }: QuizPanelProps) {
     );
   }
 
+  // 3. No Quiz Available (after a completed initial load attempt, but no questions were found/generated):
+  // This state is reached when `questions.length` is 0, `isGenerating` is false,
+  // AND `isFetched` is true (meaning the useQuery hook has completed its initial fetch, even if it returned null).
+  if (questions.length === 0 && !isGenerating && isFetched) {
+    return (
+      <div className="h-full flex flex-col ">
+        <div className="border-b p-6">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/50 dark:to-blue-900/50 rounded-lg">
+              <MessageSquare className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Interactive Quiz
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Test your understanding
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <MessageSquare className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              No Quiz Available
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Generate quiz questions to test your understanding of this
+              document.
+            </p>
+            <Button
+              onClick={handleGenerateNewQuiz}
+              disabled={isGenerating}
+              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+            >
+              {isGenerating ? (
+                "Generating..."
+              ) : (
+                <>
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Generate Quiz
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 4. Show Results State:
   if (showResults) {
     return (
       <div className="h-full flex flex-col bg-white dark:bg-gray-900">
-        <div className="border-b  p-6">
+        <div className="border-b p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-gradient-to-r from-green-100 to-blue-100 dark:from-green-900/50 dark:to-blue-900/50 rounded-lg">
@@ -313,7 +452,7 @@ export function QuizPanel({ document }: QuizPanelProps) {
                 Retake
               </Button>
               <Button
-                onClick={generateNewQuiz}
+                onClick={handleGenerateNewQuiz}
                 disabled={isGenerating}
                 className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
               >
@@ -323,7 +462,7 @@ export function QuizPanel({ document }: QuizPanelProps) {
           </div>
 
           <div className="mt-4">
-            <Progress value={scorePercentage} className="h-2" />
+            <Progress value={scorePercentage} className="h-1" />
           </div>
         </div>
 
@@ -406,57 +545,24 @@ export function QuizPanel({ document }: QuizPanelProps) {
     );
   }
 
-  if (questions.length === 0) {
-    return (
-      <div className="h-full flex flex-col bg-white dark:bg-gray-900">
-        <div className="border-b  p-6">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/50 dark:to-blue-900/50 rounded-lg">
-              <MessageSquare className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Interactive Quiz
-              </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                Test your understanding
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <MessageSquare className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              No Quiz Available
-            </h3>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">
-              Generate quiz questions to test your understanding of this
-              document.
-            </p>
-            <Button
-              onClick={generateNewQuiz}
-              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-            >
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Generate Quiz
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
+  // 5. Main Quiz Display State (Default Fallback):
   const currentQ = questions[currentQuestion];
 
+  if (!currentQ) {
+    // This should ideally not be reached if previous conditions are correct,
+    // as it means questions array is empty but we're past "no quiz available" state.
+    // Log an error or return a fallback component.
+    console.error("currentQ is undefined, unexpected state.");
+    return null;
+  }
+
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-gray-900">
+    <div className="h-full flex flex-col ">
       {/* Header */}
-      <div className="border-b  p-6">
+      <div className="border-b p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/50 dark:to-blue-900/50 rounded-lg">
+            <div className="p-2 rounded-lg">
               <MessageSquare className="h-5 w-5 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
@@ -471,13 +577,11 @@ export function QuizPanel({ document }: QuizPanelProps) {
 
           <div className="flex items-center space-x-2">
             <div className="flex items-center space-x-2">
-              <label className="text-sm text-gray-600 dark:text-gray-300">
-                Questions:
-              </label>
+              <label className="text-sm ">Questions:</label>
               <select
                 value={questionCount}
                 onChange={(e) => setQuestionCount(Number(e.target.value))}
-                className="px-2 py-1 border rounded text-sm"
+                className="px-2 py-1 border rounded text-sm bg-gray-50 dark:bg-gray-800"
               >
                 <option value={3}>3</option>
                 <option value={5}>5</option>
@@ -489,15 +593,15 @@ export function QuizPanel({ document }: QuizPanelProps) {
               </select>
             </div>
             <div className="flex items-center space-x-2">
-              <label className="text-sm text-gray-600 dark:text-gray-300">
+              <Label className="text-sm text-gray-600 dark:text-gray-300">
                 Difficulty:
-              </label>
+              </Label>
               <select
                 value={difficulty}
                 onChange={(e) =>
                   setDifficulty(e.target.value as "easy" | "medium" | "hard")
                 }
-                className="px-2 py-1 border rounded text-sm"
+                className="px-2 py-1 border rounded text-sm bg-gray-50 dark:bg-gray-800"
               >
                 <option value="easy">Easy</option>
                 <option value="medium">Medium</option>
@@ -505,7 +609,7 @@ export function QuizPanel({ document }: QuizPanelProps) {
               </select>
             </div>
             <Button
-              onClick={generateNewQuiz}
+              onClick={handleGenerateNewQuiz}
               disabled={isGenerating}
               variant="outline"
               size="sm"
@@ -546,7 +650,7 @@ export function QuizPanel({ document }: QuizPanelProps) {
               </CardHeader>
 
               <CardContent>
-                {currentQ.type === "multiple-choice" && currentQ.options && (
+                {currentQ.type === "MULTIPLE_CHOICE" && currentQ.options && (
                   <RadioGroup
                     value={userAnswers[currentQ.id] || ""}
                     onValueChange={(value) =>
@@ -570,7 +674,7 @@ export function QuizPanel({ document }: QuizPanelProps) {
                   </RadioGroup>
                 )}
 
-                {currentQ.type === "fill-in-blank" && (
+                {currentQ.type === "FILL_IN_BLANK" && (
                   <div className="space-y-3">
                     <Label
                       htmlFor="fill-answer"
@@ -590,7 +694,7 @@ export function QuizPanel({ document }: QuizPanelProps) {
                   </div>
                 )}
 
-                {currentQ.type === "true-false" && currentQ.options && (
+                {currentQ.type === "TRUE_FALSE" && currentQ.options && (
                   <RadioGroup
                     value={userAnswers[currentQ.id] || ""}
                     onValueChange={(value) =>
@@ -623,7 +727,7 @@ export function QuizPanel({ document }: QuizPanelProps) {
       </div>
 
       {/* Navigation */}
-      <div className="border-t  p-6">
+      <div className="border-t p-6">
         <div className="flex items-center justify-between">
           <Button
             variant="outline"

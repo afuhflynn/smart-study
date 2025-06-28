@@ -245,7 +245,7 @@ export function RecentDocuments({
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <Link href={`/reader/${doc.id}`}>
+                    <Link href={`/reader/${doc.id}?tab=reader`}>
                       <h3 className="text-sm font-medium text-gray-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 cursor-pointer truncate">
                         {doc.title}
                       </h3>
@@ -285,7 +285,7 @@ export function RecentDocuments({
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link href={`/reader/${doc.id}`}>
+                          <Link href={`/reader/${doc.id}?tab=reader`}>
                             <Eye className="h-4 w-4 mr-2" />
                             Open
                           </Link>

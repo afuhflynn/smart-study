@@ -20,12 +20,12 @@ export function middleware(request: NextRequest) {
   }
 
   // If user is not authenticated and tries to access protected routes, redirect to signin
-  // if (
-  //   !sessionToken &&
-  //   (pathname.startsWith("/dashboard") || pathname.startsWith("/reader"))
-  // ) {
-  //   return NextResponse.redirect(new URL("/auth/signin", request.url));
-  // }
+  if (
+    !sessionToken &&
+    (pathname.startsWith("/dashboard") || pathname.startsWith("/reader"))
+  ) {
+    return NextResponse.redirect(new URL("/auth/signin", request.url));
+  }
 
   return NextResponse.next();
 }

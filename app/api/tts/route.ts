@@ -2,29 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
-    const {
-      text,
-      voice = "rachel",
-      speed = 1.0,
-      chapterId,
-    } = await request.json();
+    const { text, voice = "rachel", speed = 1.0 } = await request.json();
 
     if (!text) {
       return NextResponse.json({ error: "No text provided" }, { status: 400 });
     }
+
+    const sanitizedText = text.trim();
 
     // Check if ElevenLabs API key is configured
     if (!process.env.ELEVENLABS_API_KEY) {
       console.warn("ElevenLabs API key not configured, using mock audio");
 
       const mockAudioData = {
-        audioUrl: generateMockAudioUrl(text),
-        duration: Math.ceil(text.split(" ").length / 2.5),
-        wordTimestamps: generateMockTimestamps(text),
+        audioUrl: generateMockAudioUrl(sanitizedText),
+        duration: Math.ceil(sanitizedText.split(" ").length / 2.5),
+        wordTimestamps: generateMockTimestamps(sanitizedText),
         voice: voice,
         voiceId: "mock-voice-id",
         speed,
-        chapterId,
       };
 
       return NextResponse.json({
@@ -56,7 +52,7 @@ export async function POST(request: NextRequest) {
             "xi-api-key": process.env.ELEVENLABS_API_KEY,
           },
           body: JSON.stringify({
-            text: text,
+            text: sanitizedText,
             model_id: "eleven_monolingual_v1",
             voice_settings: {
               stability: 0.5,
@@ -98,7 +94,6 @@ export async function POST(request: NextRequest) {
           voice: getVoiceName(voiceId),
           voiceId: voiceId,
           speed,
-          chapterId,
         },
       });
     } catch (elevenLabsError) {
@@ -112,7 +107,6 @@ export async function POST(request: NextRequest) {
         voice: voice,
         voiceId: "mock-voice-id",
         speed,
-        chapterId,
       };
 
       return NextResponse.json({

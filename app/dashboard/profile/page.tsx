@@ -208,7 +208,7 @@ export default function ProfilePage() {
   };
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="h-screen">
         <main className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center h-64">
             <Loader2 className="h-8 w-8 animate-spin" />
@@ -219,7 +219,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 px-[2rem]">
+    <div className="h-screen paddingX py-4 overflow-auto">
       <div>
         <Button asChild variant={"outline"} className="mt-4 ml-4">
           <Link href="/dashboard" className="flex items-center gap-4">

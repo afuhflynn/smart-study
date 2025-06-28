@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { MAX_CHARACTER_INPUT_LENGTH } from "@/constants/constants";
-import { model } from "@/constants/gemini";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  _: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -14,9 +15,8 @@ export async function GET(request: NextRequest) {
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const { id } = await request.json();
 
-    if (!id) {
+    if (!params.id) {
       return NextResponse.json(
         { error: "No quiz id provided" },
         { status: 400 }
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
     const quiz = await prisma.quiz.findUnique({
       where: {
-        id,
+        documentId: params.id,
         userId: session.user.id,
       },
     });
@@ -83,6 +83,59 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         error: "Failed to fetch quiz questions",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  _: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (!params.id) {
+      return NextResponse.json(
+        { error: "No quiz id provided" },
+        { status: 400 }
+      );
+    }
+
+    const quiz = await prisma.quiz.delete({
+      where: {
+        id: params.id,
+        userId: session.user.id,
+      },
+    });
+
+    if (!quiz) {
+      return NextResponse.json(
+        {
+          error: "Failed to delete quiz.",
+          details: "An unexpected error occurred deleting quiz.",
+        },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Quiz deleted successfully",
+    });
+  } catch (error) {
+    console.error("Quiz deletion failed:", error);
+    return NextResponse.json(
+      {
+        error: "Failed to delete quiz.",
         details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }

@@ -58,29 +58,29 @@ export default function ReaderPage() {
     );
   }
 
-  // if (error || !document) {
-  //   return (
-  //     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-  //       <main className="flex items-center justify-center h-screen">
-  //         <div className="text-center">
-  //           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-  //             {error || "Document not found"}
-  //           </h1>
-  //           <p className="text-gray-600 dark:text-gray-300 mb-4">
-  //             The document you&apos;re looking for doesn&apos;t exist or you
-  //             don&apos;t have access to it.
-  //           </p>
-  //           <a
-  //             href="/dashboard"
-  //             className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-  //           >
-  //             ← Back to Dashboard
-  //           </a>
-  //         </div>
-  //       </main>
-  //     </div>
-  //   );
-  // }
+  if (error || !document) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <main className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+              {error || "Document not found"}
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300 mb-4">
+              The document you&apos;re looking for doesn&apos;t exist or you
+              don&apos;t have access to it.
+            </p>
+            <a
+              href="/dashboard"
+              className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+            >
+              ← Back to Dashboard
+            </a>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">

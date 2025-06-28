@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react"; // useEffect and isLoading state will be managed by TanStack Query
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -33,117 +33,170 @@ import {
   Target,
 } from "lucide-react";
 
+// TanStack Query imports
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { toast } from "sonner"; // Assuming you have a toast component (e.g., from shadcn/ui)
+
+// Initialize QueryClient outside the component to prevent re-initialization
+const queryClient = new QueryClient();
+
+// --- Adjusted Quiz Interface based on Prisma model and client-side expectations ---
 interface Quiz {
   id: string;
   title: string;
+  // NOTE: `difficulty` is NOT directly on the Prisma Quiz model.
+  // The API now derives it from the first question's difficulty.
+  // For a robust solution, consider adding a `difficulty` field to your Prisma Quiz model.
   difficulty: "easy" | "medium" | "hard";
   questionCount: number;
-  date: string;
-  summaryId: string;
-  lastScore?: number;
-  totalAttempts: number;
-  bestScore: number;
+  userId: string;
+  documentId: string; // Matches Prisma `documentId`
+  totalAttempts: number; // No longer optional due to API mapping `null` to 0
+  bestScore: number; // No longer optional due to API mapping `null` to 0
+  lastScore: number; // Mapped from Prisma's `lasScore` typo, no longer optional
+  createdAt: string; // Matches Prisma `createdAt`, used for date display
+  updatedAt: string;
+  // `questions` (Json[]) is not included here as we don't display it directly on this page
 }
 
-export default function QuizzesPage() {
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+// --- Helper Functions ---
+
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+};
+
+const getDifficultyColor = (difficulty: string) => {
+  switch (difficulty) {
+    case "easy":
+      return "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300";
+    case "medium":
+      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300";
+    case "hard":
+      return "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300";
+    default:
+      return "bg-muted text-muted-foreground";
+  }
+};
+
+const getScoreColor = (score: number, total: number) => {
+  // Handle cases where total is 0 to prevent division by zero
+  if (total === 0) return "text-foreground/70"; // Or any other appropriate style
+  const percentage = (score / total) * 100;
+  if (percentage >= 80) return "text-green-600 dark:text-green-400";
+  if (percentage >= 60) return "text-yellow-600 dark:text-yellow-400";
+  return "text-red-600 dark:text-red-400";
+};
+
+// --- API Functions for TanStack Query ---
+
+async function fetchQuizzes(): Promise<{ quizzes: Quiz[] }> {
+  const res = await fetch("/api/quiz");
+  if (!res.ok) {
+    if (res.status === 401) {
+      // Optionally redirect to login or handle unauthorized state
+      // For now, re-throw to be caught by TanStack Query's error handling
+      const errorData = await res.json();
+      throw new Error(errorData.error || "Unauthorized: Please log in.");
+    }
+    const errorData = await res.json();
+    throw new Error(errorData.error || "Failed to fetch quizzes");
+  }
+  return res.json();
+}
+
+// --- Main QuizzesPage Component ---
+function QuizzesPageContent() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [quizToDelete, setQuizToDelete] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [quizToDeleteId, setQuizToDeleteId] = useState<string | null>(null);
 
-  // In a real app, we'd fetch quizzes from API
-  // For demo, we'll create mock data
-  useEffect(() => {
-    const fetchData = async () => {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+  const queryClient = useQueryClient();
 
-      const mockData: Quiz[] = [
-        {
-          id: "1",
-          title: "Photosynthesis Process Quiz",
-          difficulty: "medium",
-          questionCount: 5,
-          date: "2025-03-15T10:35:00",
-          summaryId: "summary-1",
-          lastScore: 4,
-          totalAttempts: 3,
-          bestScore: 5,
-        },
-        {
-          id: "2",
-          title: "Cell Structure and Function Quiz",
-          difficulty: "easy",
-          questionCount: 5,
-          date: "2025-03-14T14:50:00",
-          summaryId: "summary-2",
-          lastScore: 3,
-          totalAttempts: 2,
-          bestScore: 4,
-        },
-        {
-          id: "3",
-          title: "Newton's Laws of Motion Quiz",
-          difficulty: "hard",
-          questionCount: 5,
-          date: "2025-03-13T09:20:00",
-          summaryId: "summary-3",
-          totalAttempts: 0,
-          bestScore: 0,
-        },
-      ];
+  // Query to fetch quizzes
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["quizzes"],
+    queryFn: fetchQuizzes,
+  });
 
-      setQuizzes(mockData);
-      setIsLoading(false);
-    };
-
-    fetchData();
-  }, []);
-
-  const handleDelete = (id: string) => {
-    setQuizzes((prevQuizzes) => prevQuizzes.filter((quiz) => quiz.id !== id));
-    setQuizToDelete(null);
-  };
-
-  const filteredQuizzes = quizzes.filter((quiz) =>
-    quiz.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
+  async function deleteQuiz(id: string): Promise<{ id: string }> {
+    const res = await fetch(`/api/quiz/${id}`, {
+      method: "DELETE",
     });
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(
+        errorData.error || `Failed to delete quiz with ID: ${id}`
+      );
+    }
+    refetch();
+    return res.json();
+  }
+  // Mutation to delete a quiz
+  const deleteMutation = useMutation({
+    mutationFn: deleteQuiz,
+    onSuccess: (data) => {
+      // Invalidate the 'quizzes' query to refetch data
+      // This is generally preferred for simple list invalidation,
+      // or you could use setQueryData to remove the item directly for a faster UI.
+      queryClient.invalidateQueries({ queryKey: ["quizzes"] });
+      setQuizToDeleteId(null); // Close the dialog
+      toast.success(`Quiz "${data.id}" deleted successfully!`);
+    },
+    onError: (err) => {
+      toast.error(`Error deleting quiz: ${err.message}`);
+    },
+  });
+
+  const handleDeleteClick = (id: string) => {
+    setQuizToDeleteId(id);
   };
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case "easy":
-        return "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300";
-      case "medium":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300";
-      case "hard":
-        return "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300";
-      default:
-        return "bg-muted text-muted-foreground";
+  const confirmDelete = () => {
+    if (quizToDeleteId) {
+      deleteMutation.mutate(quizToDeleteId);
     }
   };
 
-  const getScoreColor = (score: number, total: number) => {
-    const percentage = (score / total) * 100;
-    if (percentage >= 80) return "text-green-600 dark:text-green-400";
-    if (percentage >= 60) return "text-yellow-600 dark:text-yellow-400";
-    return "text-red-600 dark:text-red-400";
-  };
+  const allQuizzes = data?.quizzes || [];
+
+  const filteredQuizzes = allQuizzes.filter((quiz) =>
+    quiz.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="text-center py-12 space-y-4">
+        <p className="text-destructive">
+          Error: {error?.message || "Failed to load quizzes."}
+        </p>
+        <Button
+          onClick={() =>
+            queryClient.invalidateQueries({ queryKey: ["quizzes"] })
+          }
+        >
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Retry
+        </Button>
       </div>
     );
   }
@@ -157,12 +210,6 @@ export default function QuizzesPage() {
             Take quizzes and track your learning progress
           </p>
         </div>
-        <Link href="/dashboard/upload">
-          <Button>
-            <Upload className="mr-2 h-4 w-4" />
-            New Upload
-          </Button>
-        </Link>
       </div>
 
       {/* Search */}
@@ -192,7 +239,7 @@ export default function QuizzesPage() {
                     <FileQuestion className="h-5 w-5 text-primary flex-shrink-0 mt-1" />
                     <div className="flex items-center space-x-1 text-xs text-foreground/50">
                       <Calendar className="h-3 w-3" />
-                      <span>{formatDate(quiz.date)}</span>
+                      <span>{formatDate(quiz.createdAt)}</span>
                     </div>
                   </div>
                   <CardTitle className="text-lg line-clamp-2">
@@ -222,6 +269,7 @@ export default function QuizzesPage() {
                             {quiz.bestScore}/{quiz.questionCount}
                           </span>
                         </div>
+                        {/* Check if lastScore is defined before displaying */}
                         {quiz.lastScore !== undefined && (
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-foreground/70">
@@ -256,7 +304,9 @@ export default function QuizzesPage() {
                 </CardContent>
                 <div className="px-6 pb-6 pt-2 border-t flex justify-between">
                   <div className="space-x-2">
-                    <Link href={`/dashboard/quiz/${quiz.id}`}>
+                    <Link
+                      href={`/reader/${quiz.documentId}?tab=quiz&quizId=${quiz.id}`}
+                    >
                       <Button size="sm">
                         <Play className="h-4 w-4 mr-1" />
                         {quiz.totalAttempts > 0 ? "Retake" : "Start"}
@@ -267,7 +317,7 @@ export default function QuizzesPage() {
                     size="sm"
                     variant="ghost"
                     className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={() => setQuizToDelete(quiz.id)}
+                    onClick={() => handleDeleteClick(quiz.id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -301,7 +351,13 @@ export default function QuizzesPage() {
       )}
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={!!quizToDelete} onOpenChange={() => setQuizToDelete(null)}>
+      <Dialog
+        open={!!quizToDeleteId}
+        onOpenChange={() => {
+          setQuizToDeleteId(null);
+          deleteMutation.reset(); // Reset mutation state if dialog is closed manually
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Are you sure?</DialogTitle>
@@ -311,18 +367,32 @@ export default function QuizzesPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setQuizToDelete(null)}>
+            <Button
+              variant="outline"
+              onClick={() => setQuizToDeleteId(null)}
+              disabled={deleteMutation.isPending}
+            >
               Cancel
             </Button>
             <Button
               variant="destructive"
-              onClick={() => quizToDelete && handleDelete(quizToDelete)}
+              onClick={confirmDelete}
+              disabled={deleteMutation.isPending}
             >
-              Delete
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+// Wrap the component with QueryClientProvider
+export default function QuizzesPage() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <QuizzesPageContent />
+    </QueryClientProvider>
   );
 }

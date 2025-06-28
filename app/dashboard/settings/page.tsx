@@ -206,7 +206,7 @@ export default function SettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="h-screen">
         <main className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center h-64">
             <Loader2 className="h-8 w-8 animate-spin" />
@@ -217,7 +217,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 px-[14rem]">
+    <div className="h-screen overflow-auto lg:px-[14rem] paddingX py-4">
       <div>
         <Button asChild variant={"outline"} className="mt-4 ml-4">
           <Link href="/dashboard" className="flex items-center gap-4">

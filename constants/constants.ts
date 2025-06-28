@@ -174,3 +174,30 @@ export const dashboardNavigationItems = [
     badge: null,
   },
 ];
+
+export const defaultVoices = [
+  {
+    id: "rachel",
+    name: "Rachel",
+    category: "premade",
+    description: "Calm American female",
+  },
+  {
+    id: "adam",
+    name: "Adam",
+    category: "premade",
+    description: "Deep American male",
+  },
+  {
+    id: "bella",
+    name: "Bella",
+    category: "premade",
+    description: "Warm British female",
+  },
+  {
+    id: "charlie",
+    name: "Charlie",
+    category: "premade",
+    description: "Professional British male",
+  },
+];
