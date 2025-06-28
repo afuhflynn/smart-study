@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Book, Menu, X, Sparkles } from "lucide-react";
 import { UserButton } from "../user-button";
 import { dashboardNavigationItems } from "@/constants/constants";
+import { Logo } from "../layout/logo";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -76,21 +77,7 @@ export function Sidebar() {
       >
         {/* Header */}
         <div className="p-4 border-b border-border">
-          <div className="flex items-center justify-between">
-            <motion.div
-              variants={contentVariants}
-              className="flex items-center space-x-2"
-            >
-              <Link href="/dashboard" className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
-                  <Book className="h-4 w-4 text-white" />
-                </div>
-                <span className="font-bold text-lg gradient-text">
-                  SmartStudy
-                </span>
-              </Link>
-            </motion.div>
-          </div>
+          <Logo />
         </div>
 
         {/* Navigation */}
