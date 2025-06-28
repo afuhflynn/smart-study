@@ -53,8 +53,7 @@ export function Hero() {
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             Transform your reading experience with AI-powered summaries,
-            interactive quizzes, and natural voice narration. Powered by Google
-            Gemini and ElevenLabs.
+            interactive quizzes, and natural voice narration.
           </motion.p>
 
           <motion.div

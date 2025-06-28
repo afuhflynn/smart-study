@@ -6,57 +6,14 @@ import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import {
-  Book,
-  Upload,
-  FileText,
-  FileQuestion,
-  Clock,
-  Settings,
-  LogOut,
-  Menu,
-  X,
-  Home,
-  Sparkles,
-  TrendingUp,
-  Target,
-  Award,
-  Brain,
-  Zap,
-  ChevronRight,
-  Bell,
-  Search,
-  User,
-} from "lucide-react";
-import { signOut, useSession } from "@/lib/auth-client";
-import { toast } from "sonner";
+import { Book, Menu, X, Sparkles } from "lucide-react";
 import { UserButton } from "../user-button";
 import { dashboardNavigationItems } from "@/constants/constants";
-
-interface User {
-  name: string;
-  email: string;
-  image?: string;
-}
-
-interface SidebarProps {
-  user: User;
-}
 
 export function Sidebar() {
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [notifications, setNotifications] = useState(3);
 
   useEffect(() => {
     const handleResize = () => {

@@ -1,6 +1,5 @@
 import {
   Brain,
-  Clock,
   FileQuestion,
   FileText,
   Github,

@@ -71,7 +71,7 @@ export async function GET(
       questions,
       title: quiz?.title,
       id: quiz.id,
-      lastScore: quiz?.lasScore,
+      lastScore: quiz?.lastScore,
       bestScore: quiz?.bestScore,
       totalAttempts: quiz?.totalAttempts,
       createdAt: quiz?.createdAt,

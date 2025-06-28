@@ -9,15 +9,6 @@ import {
   Profiler,
 } from "react";
 import throttle from "lodash.throttle";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Type,
-  Bookmark,
-  BookmarkCheck,
-} from "lucide-react";
 import { motion } from "framer-motion";
 import { useSession } from "@/lib/auth-client";
 
@@ -37,9 +28,7 @@ interface DocumentViewerProps {
 }
 
 export function DocumentViewer({ document, content }: DocumentViewerProps) {
-  const [fontSize, setFontSize] = useState(16);
   const [readingProgress, setReadingProgress] = useState(document?.progress);
-  const [isBookmarked, setIsBookmarked] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const { data: session } = useSession();
 

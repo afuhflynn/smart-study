@@ -172,35 +172,36 @@ enum QuestionDifficulty {
 }
 
 model Quiz {
-  id            String   @id @default(cuid())
+  id            String             @id @default(cuid())
   title         String
   questions     Json[] // [{id: unique_id, question: string, options: [1, 2, 3, 4 or true / false], correctAnswer, explanation, difficulty: QuestionDifficulty, type: QuizType}]
   userId        String
-  documentId    String   @unique
+  documentId    String             @unique
   questionCount Int
-  totalAttempts Int?     @default(0)
-  bestScore     Int?     @default(0)
-  lasScore      Int?     @default(0)
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  document      Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  totalAttempts Int?               @default(0)
+  bestScore     Int?               @default(0)
+  lastScore     Int?               @default(0)
+  difficulty    QuestionDifficulty @default(MEDIUM)
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document      Document           @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
 }
 
 model QuizResult {
-  id             String   @id @default(cuid())
+  id             String             @id @default(cuid())
   documentId     String
   userId         String
   questions      Json
   answers        Json
   score          Float
   totalQuestions Int
+  difficulty     QuestionDifficulty
   correctAnswers Int
   timeSpent      Int
-  difficulty     String
-  document       Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt      DateTime @default(now())
+  document       Document           @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime           @default(now())
 }
 
 model ReadingSession {

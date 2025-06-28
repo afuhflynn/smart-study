@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     const {
       content,
       title,
-      difficulty = "medium",
+      difficulty = "MEDIUM",
       documentId,
       questionCount = 10,
     } = await request.json();
@@ -229,6 +229,7 @@ export async function POST(request: NextRequest) {
           userId: session.user.id,
           questionCount: questions.length,
           documentId,
+          difficulty,
         },
       });
 

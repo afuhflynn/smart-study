@@ -86,7 +86,7 @@ export function ReadingStats({ userStats, isLoading }: ReadingStatsProps) {
   };
 
   const readingStreak = userStats?.streak?.last7Days || [];
-  const achievements = userStats?.achievements || [];
+  const achievements = userStats?.achievements?.slice(0, 4) || [];
   const currentStreak = userStats?.streak?.current || 0;
 
   const getAchievementIcon = (type: string) => {

@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
   Play,
@@ -91,15 +90,14 @@ export function AudioPlayer({
     fetchVoices();
   }, []);
 
-  // Generate audio when chapter changes
+  // Generate audio when content changes
   const generateAudio = useCallback(async () => {
-    if (!document || content?.length < 0) return;
+    if (!document || content.length === 0) return;
     setIsGenerating(true);
     setError(null);
     setWarning(null);
 
     try {
-      // Clean the content for better TTS
       const cleanContent = content
         .replace(/#{1,6}\s/g, "")
         .replace(/\*\*(.*?)\*\*/g, "$1")
@@ -112,7 +110,7 @@ export function AudioPlayer({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          text: cleanContent.substring(0, 10000), // Limit to 10,000 characters
+          text: cleanContent.substring(0, 10000),
           voice: selectedVoice,
           speed: playbackSpeed,
         }),
@@ -135,8 +133,6 @@ export function AudioPlayer({
         setAudioData(data.audio);
         setDuration(data.audio.duration);
         setCurrentTime(0);
-
-        if (data.warning) console.warn("TTS warning:", data.warning);
       } else {
         throw new Error(data.error || "Failed to generate audio");
       }
@@ -151,25 +147,27 @@ export function AudioPlayer({
   }, [content, document, playbackSpeed]);
 
   useEffect(() => {
-    if (document && content.length >= 0) {
-      generateAudio();
-    }
-  }, [document, content, selectedVoice, generateAudio]);
+    generateAudio();
+  }, [generateAudio]);
 
-  // Update speed & volume
+  // Control playback rate and volume
   useEffect(() => {
     if (audioRef.current) audioRef.current.playbackRate = playbackSpeed;
   }, [playbackSpeed]);
+
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = isMuted ? 0 : volume / 100;
   }, [volume, isMuted]);
 
-  // Auto-play new audioData
+  // Play or pause audio according to isPlaying
   useEffect(() => {
-    if (audioData && isPlaying && audioRef.current) {
+    if (!audioRef.current) return;
+    if (isPlaying) {
       audioRef.current.play().catch(console.error);
+    } else {
+      audioRef.current.pause();
     }
-  }, [audioData, content, isPlaying]);
+  }, [isPlaying]);
 
   // Fetch voices
   const fetchVoices = async () => {
@@ -189,7 +187,7 @@ export function AudioPlayer({
     }
   };
 
-  // Handlers: skip, seek, volume, time formatting…
+  // Formatting and handlers
   const formatTime = (s: number) =>
     `${Math.floor(s / 60)}:${Math.floor(s % 60)
       .toString()
@@ -197,7 +195,7 @@ export function AudioPlayer({
   const handleSeek = (val: number[]) => {
     const t = val[0];
     setCurrentTime(t);
-    audioRef.current!.currentTime = t;
+    if (audioRef.current) audioRef.current.currentTime = t;
   };
   const handleVolumeChange = (val: number[]) => {
     setVolume(val[0]);
@@ -213,18 +211,19 @@ export function AudioPlayer({
     audioRef.current.currentTime = newT;
     setCurrentTime(newT);
   };
-  const speedOptions = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
   const handleAudioEnd = () => {
     setCurrentTime(0);
     onPlayPause();
   };
 
+  const speedOptions = [0.5, 0.75, 1, 1.25, 1.5, 2];
+
   return (
     <motion.div
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="border-t  shadow-lg"
+      className="border-t shadow-lg"
     >
       {audioData && (
         <audio
@@ -243,6 +242,7 @@ export function AudioPlayer({
       )}
 
       <div className="px-6 py-4">
+        {/* Error banner */}
         {error && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -254,6 +254,7 @@ export function AudioPlayer({
           </motion.div>
         )}
 
+        {/* Seek slider */}
         <div className="mb-4">
           <Slider
             value={[currentTime]}
@@ -269,13 +270,12 @@ export function AudioPlayer({
           </div>
         </div>
 
+        {/* Controls row */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3 min-w-0 flex-1">
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                Audio Narration
-              </p>
-            </div>
+            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+              Audio Narration
+            </p>
           </div>
 
           <div className="flex items-center space-x-4">
@@ -289,8 +289,10 @@ export function AudioPlayer({
               <SkipBack className="h-4 w-4" />
             </Button>
             <Button
-              onClick={onPlayPause}
-              disabled={isGenerating || (!audioData && !isGenerating)}
+              onClick={() => {
+                onPlayPause();
+              }}
+              disabled={isGenerating || !audioData}
               className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-full w-12 h-12 p-0 shadow-lg"
             >
               {isGenerating ? (
@@ -312,6 +314,7 @@ export function AudioPlayer({
             </Button>
           </div>
 
+          {/* Volume and settings */}
           <div className="flex items-center space-x-2 flex-1 justify-end">
             <div className="hidden sm:flex items-center space-x-2">
               <Button
@@ -354,17 +357,26 @@ export function AudioPlayer({
                   >
                     <div className="space-y-4">
                       <div>
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
+                        <Label
+                          htmlFor="voice"
+                          className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2"
+                        >
                           Voice
-                        </label>
-                        <span className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-white">
+                        </Label>
+                        <p
+                          id="voice"
+                          className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white"
+                        >
                           {availableVoices[0]?.name || "Default"}
-                        </span>
+                        </p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
+                        <Label
+                          htmlFor="speed"
+                          className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2"
+                        >
                           Playback Speed
-                        </label>
+                        </Label>
                         <div className="grid grid-cols-3 gap-1">
                           {speedOptions.map((speed) => (
                             <Button
@@ -382,9 +394,9 @@ export function AudioPlayer({
                         </div>
                       </div>
                       <div className="sm:hidden">
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
+                        <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
                           Volume
-                        </label>
+                        </Label>
                         <div className="flex items-center space-x-2">
                           <VolumeX className="h-4 w-4" />
                           <Slider
@@ -422,6 +434,7 @@ export function AudioPlayer({
           </div>
         </div>
 
+        {/* Generating indicator */}
         {isGenerating && (
           <motion.div
             initial={{ opacity: 0 }}

@@ -33,11 +33,11 @@ const ReaderComponent = ({
   const [content, setContent] = useState<string>("");
   const [currentChapter, setCurrentChapter] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [highlightedWordIndex, setHighlightedWordIndex] = useState(-1);
   const [document, setDocument] = useState(propDocument);
   const params = useSearchParams();
   const currentTab = params.get("tab");
   const pathName = usePathname();
+  console.log(content);
 
   // Update document when prop changes
   useEffect(() => {
@@ -63,6 +63,9 @@ const ReaderComponent = ({
               progress: chapterProgress,
             }),
           });
+
+          // TODO: to be removed
+          setCurrentChapter(currentChapter);
         } catch (error) {
           console.error("Failed to update progress:", error);
         }
@@ -82,10 +85,6 @@ const ReaderComponent = ({
 
   const handlePlayPause = () => {
     setIsPlaying(!isPlaying);
-  };
-
-  const handleWordHighlight = (wordIndex: number) => {
-    setHighlightedWordIndex(wordIndex);
   };
 
   if (!document) {

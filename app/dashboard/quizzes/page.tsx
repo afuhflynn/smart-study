@@ -29,7 +29,6 @@ import {
   Upload,
   Calendar,
   RefreshCw,
-  Trophy,
   Target,
 } from "lucide-react";
 
@@ -59,7 +58,7 @@ interface Quiz {
   documentId: string; // Matches Prisma `documentId`
   totalAttempts: number; // No longer optional due to API mapping `null` to 0
   bestScore: number; // No longer optional due to API mapping `null` to 0
-  lastScore: number; // Mapped from Prisma's `lasScore` typo, no longer optional
+  lastScore: number; // Mapped from Prisma's `lastScore` typo, no longer optional
   createdAt: string; // Matches Prisma `createdAt`, used for date display
   updatedAt: string;
   // `questions` (Json[]) is not included here as we don't display it directly on this page

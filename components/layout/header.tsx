@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { BookOpen, User, Settings, LogOut, Book } from "lucide-react";
+import { User, Settings, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
 import { useSession, signOut } from "@/lib/auth-client";
 import { toast } from "sonner";

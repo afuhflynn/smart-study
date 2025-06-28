@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { FileUpload } from "@/components/upload/file-upload";
 import { RecentDocuments } from "./recent-documents";
 import { ReadingStats } from "./reading-stats";
-import { Plus, BookOpen, Clock, TrendingUp, Zap } from "lucide-react";
+import { Plus, TrendingUp, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 
@@ -50,20 +50,6 @@ export function Dashboard() {
 
     return [
       {
-        title: "Documents Read",
-        value: stats.documentsRead.toString(),
-        change: `${stats.completionRate}% completion rate`,
-        icon: BookOpen,
-        gradient: "from-blue-500 to-indigo-500",
-      },
-      {
-        title: "Hours Saved",
-        value: stats.hoursSaved.toString(),
-        change: `${stats.readingConsistency}% consistency`,
-        icon: Clock,
-        gradient: "from-emerald-500 to-teal-500",
-      },
-      {
         title: "Quiz Score",
         value: `${stats.quizScore}%`,
         change: `${stats.totalQuizzes} quizzes taken`,
@@ -81,7 +67,7 @@ export function Dashboard() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 relative">
+    <div className="container mx-auto px-4 py-8 pt-16 relative">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -98,7 +84,7 @@ export function Dashboard() {
             {session?.user.createdAt === new Date()
               ? "Hey there, "
               : "Welcome back, "}{" "}
-            {session?.user?.name?.split(" ")[0]}!
+            {session?.user?.name?.split(" ").slice(0, 2).join(" ")}!
           </span>{" "}
           <motion.span
             animate={{ rotate: [0, 10, -10, 0] }}
