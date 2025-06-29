@@ -32,10 +32,12 @@ export default function SignInPage() {
   const handleSignIn = async (provider: "google" | "github") => {
     setIsLoading(provider);
     try {
-      const { error } = await signIn.social({
+      const { error, data } = await signIn.social({
         provider,
         callbackURL: "/auth/signin",
       });
+
+      console.log("Sign in response:", data);
 
       // const response = await fetch("/api/auth/login-notification", {
       //   method: "POST",
