@@ -32,18 +32,18 @@ export default function SignInPage() {
   const handleSignIn = async (provider: "google" | "github") => {
     setIsLoading(provider);
     try {
-      await signIn.social({
+     const {error} =  await signIn.social({
         provider,
         callbackURL: "/auth/signin",
       });
 
-      const response = await fetch("/api/auth/login-notification", {
-        method: "POST",
-      });
+      // const response = await fetch("/api/auth/login-notification", {
+      //   method: "POST",
+      // });
 
-      const data = await response.json();
+      // const data = await response.json();
 
-      if (data.success) {
+      if (!error) {
         router.push("/dashboard");
       }
     } catch (error) {
