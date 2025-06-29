@@ -37,14 +37,14 @@ export default function SignInPage() {
         callbackURL: "/auth/signin",
       });
 
+      const response = await fetch("/api/auth/login-notification", {
+        method: "POST",
+      });
+
+       await response.json();
         if(!error){
           router.push("/dashboard");
         }
-      // const response = await fetch("/api/auth/login-notification", {
-      //   method: "POST",
-      // });
-
-      // const data = await response.json();
 
 
     } catch (error) {
