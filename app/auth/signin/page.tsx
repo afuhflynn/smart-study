@@ -24,20 +24,22 @@ export default function SignInPage() {
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (!isPending && session) {
+    if (session) {
       router.push("/dashboard");
     }
-  }, [session, isPending, router]);
+  }, [session, router]);
 
   const handleSignIn = async (provider: "google" | "github") => {
     setIsLoading(provider);
     try {
-      await signIn.social({
+     const {error} =  await signIn.social({
         provider,
         callbackURL: "/auth/signin",
       });
 
-        // router.push("/dashboard");
+        if(!error){
+          router.push("/dashboard");
+        }
       // const response = await fetch("/api/auth/login-notification", {
       //   method: "POST",
       // });
