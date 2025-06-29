@@ -34,10 +34,10 @@ export default function SignInPage() {
     try {
       await signIn.social({
         provider,
-        callbackURL: "/dashboard",
+        callbackURL: "/auth/signin",
       });
 
-        // router.push("/dashboard");
+        router.push("/dashboard");
       // const response = await fetch("/api/auth/login-notification", {
       //   method: "POST",
       // });
