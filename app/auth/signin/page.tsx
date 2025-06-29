@@ -29,6 +29,10 @@ export default function SignInPage() {
     }
   }, [session, router]);
 
+  if (session) {
+    return router.push("/dashboard"); // Will redirect via useEffect
+  }
+
   const handleSignIn = async (provider: "google" | "github") => {
     setIsLoading(provider);
     try {
@@ -55,10 +59,6 @@ export default function SignInPage() {
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
     );
-  }
-
-  if (session) {
-    return null; // Will redirect via useEffect
   }
 
   return (
