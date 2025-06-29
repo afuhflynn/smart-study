@@ -37,7 +37,7 @@ export default function SignInPage() {
         callbackURL: "/auth/signin",
       });
 
-        router.push("/dashboard");
+        // router.push("/dashboard");
       // const response = await fetch("/api/auth/login-notification", {
       //   method: "POST",
       // });
