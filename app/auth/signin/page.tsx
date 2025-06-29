@@ -24,10 +24,10 @@ export default function SignInPage() {
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (!isPending && session) {
+    if (session) {
       router.push("/dashboard");
     }
-  }, [session, isPending, router]);
+  }, [session, router]);
 
   const handleSignIn = async (provider: "google" | "github") => {
     setIsLoading(provider);
@@ -41,8 +41,7 @@ export default function SignInPage() {
       //   method: "POST",
       // });
 
-      // const data = await response.json();
-
+      //  await response.json();
       if (!error) {
         router.push("/dashboard");
       }
