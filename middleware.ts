@@ -6,7 +6,6 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Get the session token from cookies
-  const url = request.nextUrl;
   const sessionCookie = getSessionCookie(request);
 
   // If user is authenticated and tries to access landing page, redirect to dashboard

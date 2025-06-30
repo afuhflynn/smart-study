@@ -78,13 +78,51 @@ export function Hero() {
               className="px-8 py-6 text-lg"
               asChild
             >
-              <Link href="https://youtube.com/watch?q=youtube-link">
+              <Link href="https://youtu.be/gNIMOvIEgqo" target="_blank">
                 <Play className="mr-2 h-5 w-5" />
-                Watch Demo
+                Watch YouTube Demo
               </Link>
             </Button>
           </motion.div>
-
+          <motion.h2
+            className="text-2xl md:text-3xl font-semibold mb-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.35 }}
+          >
+            See Smart Study in Action
+          </motion.h2>
+          <div
+            style={{
+              height: 0,
+              paddingBottom: "56.25%",
+              position: "relative",
+              width: "100%",
+            }}
+          >
+            <iframe
+              allow="autoplay; gyroscope;"
+              allowFullScreen
+              height="100%"
+              referrerPolicy="strict-origin"
+              src="https://www.kapwing.com/e/6862278db6f78d855ea2bb55"
+              style={{
+                border: 0,
+                height: "100%",
+                left: 0,
+                overflow: "hidden",
+                position: "absolute",
+                top: 0,
+                width: "100%",
+              }}
+              title="Embedded content made on Kapwing"
+              width="100%"
+            ></iframe>
+          </div>
+          <p style={{ fontSize: 12, textAlign: "right" }}>
+            Video edited on{" "}
+            <a href="https://www.kapwing.com/video-editor">Kapwing</a>
+          </p>
           <motion.div
             className="flex items-center justify-center space-x-8 text-sm text-muted-foreground"
             initial={{ opacity: 0 }}
